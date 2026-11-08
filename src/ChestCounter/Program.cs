@@ -30,7 +30,7 @@ internal static class Program
             return 1;
         }
 
-        Application.Run(new MainForm(tracker, demos));
+        Application.Run(new MainForm(tracker, demos, Path.Combine(Path.GetDirectoryName(Path.GetFullPath(stateFile))!, "WebView2")));
         return 0;
     }
 }

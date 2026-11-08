@@ -8,7 +8,7 @@ Replays are only ever opened for reading. Results are stored in `%LOCALAPPDATA%\
 
 ## Requirements
 
-Windows and the .NET 10 SDK.
+Windows, the .NET 10 SDK and the Microsoft Edge WebView2 runtime (included with Windows 11).
 
 ## Usage
 
@@ -16,7 +16,7 @@ Windows and the .NET 10 SDK.
 dotnet run --project src/ChestCounter -c Release
 ```
 
-Leave it open while you play: a replay is counted once its match has ended.
+Leave it open or minimized while you play: a replay is counted once its match has ended, so the counter does not move during a match. Closing the window stops the watching.
 
 Optional arguments: `<replay folder> <state file>`.
 

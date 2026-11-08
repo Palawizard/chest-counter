@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self'; script-src 'self'">
+  <title>Compteur de coffres</title>
+  <link rel="stylesheet" href="app.css">
+</head>
+<body>
+  <main class="plate">
+    <h1>Total estimé <span class="unit">en coffres</span></h1>
+    <div class="odometer" id="odometer" role="img"></div>
+
+    <div class="parts">
+      <section class="part part-measured" aria-labelledby="measured-title">
+        <h2 id="measured-title">Part mesurée</h2>
+        <p class="figure" id="measured"></p>
+        <p class="detail" id="measured-detail"></p>
+        <p class="detail" id="average"></p>
+      </section>
+      <section class="part part-estimated" aria-labelledby="estimated-title">
+        <h2 id="estimated-title">Part estimée</h2>
+        <p class="figure" id="estimated"></p>
+        <p class="detail" id="estimated-detail"></p>
+      </section>
+    </div>
+
+    <div class="field">
+      <label for="games">Parties sans replay</label>
+      <div class="stepper">
+        <button type="button" id="less" aria-label="Retirer une partie">
+          <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8h10"/></svg>
+        </button>
+        <input id="games" type="number" inputmode="numeric" min="0" max="100000" step="1" value="0" autocomplete="off">
+        <button type="button" id="more" aria-label="Ajouter une partie">
+          <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8h10M8 3v10"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <p class="status" id="status" role="status">Chargement.</p>
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>
