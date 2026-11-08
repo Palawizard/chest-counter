@@ -59,11 +59,16 @@ public sealed partial class ChestTracker
         }
     }
 
-    public void Scan(string demosDirectory, Action? progress = null)
+    public void Scan(string demosDirectory, Action? progress = null, CancellationToken cancellation = default)
     {
         var inProgress = 0;
         foreach (var path in Directory.EnumerateFiles(demosDirectory, "*.replay", SearchOption.TopDirectoryOnly).Order())
         {
+            if (cancellation.IsCancellationRequested)
+            {
+                return;
+            }
+
             var fileName = Path.GetFileName(path);
             lock (_gate)
             {

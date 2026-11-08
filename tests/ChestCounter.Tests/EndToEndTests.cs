@@ -52,7 +52,7 @@ public sealed class EndToEndTests : IDisposable
     {
         var tracker = new ChestTracker(StateFile, ReplayAnalyzer.Analyze);
         var expected = ReplayAnalyzer.Analyze(ReplayFixture.Source).Match!.Chests;
-        using (new ReplayFolderWatcher(Demos, () => tracker.Scan(Demos), e => Assert.Fail(e.ToString()), TimeSpan.FromMilliseconds(200), TimeSpan.FromHours(1)))
+        using (new ReplayFolderWatcher(Demos, _ => tracker.Scan(Demos), e => Assert.Fail(e.ToString()), TimeSpan.FromMilliseconds(200), TimeSpan.FromHours(1)))
         {
             ReplayFixture.CopyTo(Demos, "new.replay");
             WaitUntil(() => tracker.Current.GamesAnalyzed == 1);

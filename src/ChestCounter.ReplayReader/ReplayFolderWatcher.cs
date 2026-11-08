@@ -4,13 +4,14 @@ public sealed class ReplayFolderWatcher : IDisposable
 {
     private readonly FileSystemWatcher _watcher;
     private readonly Timer _timer;
-    private readonly Action _scan;
+    private readonly Action<CancellationToken> _scan;
+    private readonly CancellationTokenSource _stop = new();
     private readonly Action<Exception> _onError;
     private readonly TimeSpan _settleDelay;
     private readonly TimeSpan _period;
     private readonly object _running = new();
 
-    public ReplayFolderWatcher(string directory, Action scan, Action<Exception> onError, TimeSpan settleDelay, TimeSpan period)
+    public ReplayFolderWatcher(string directory, Action<CancellationToken> scan, Action<Exception> onError, TimeSpan settleDelay, TimeSpan period)
     {
         _scan = scan;
         _onError = onError;
@@ -29,6 +30,7 @@ public sealed class ReplayFolderWatcher : IDisposable
 
     public void Dispose()
     {
+        _stop.Cancel();
         _watcher.Dispose();
         _timer.Dispose();
         lock (_running)
@@ -41,14 +43,14 @@ public sealed class ReplayFolderWatcher : IDisposable
     // The periodic tick stays on because file change notifications can be delayed or dropped.
     private void Tick()
     {
-        if (!Monitor.TryEnter(_running))
+        if (_stop.IsCancellationRequested || !Monitor.TryEnter(_running))
         {
             return;
         }
 
         try
         {
-            _scan();
+            _scan(_stop.Token);
         }
         catch (Exception e)
         {

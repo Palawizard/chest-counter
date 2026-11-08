@@ -75,11 +75,11 @@ internal sealed class MainForm : Form
         layout.Controls.Add(value);
     }
 
-    private void Scan()
+    private void Scan(CancellationToken cancellation)
     {
         _scanning = true;
         _error = null;
-        _tracker.Scan(_demos, PostRefresh);
+        _tracker.Scan(_demos, PostRefresh, cancellation);
         _scanning = false;
         PostRefresh();
     }

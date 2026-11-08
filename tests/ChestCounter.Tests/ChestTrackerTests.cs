@@ -148,6 +148,42 @@ public sealed class ChestTrackerTests : IDisposable
     }
 
     [Fact]
+    public void Estimate_follows_the_average_when_a_new_replay_arrives()
+    {
+        var tracker = NewTracker();
+        tracker.SetGamesPlayed(10);
+        AddReplay("a.replay", "id-a", 10);
+        tracker.Scan(Demos);
+        Assert.Equal(90, tracker.Current.EstimatedChests);
+
+        AddReplay("b.replay", "id-b", 30);
+        tracker.Scan(Demos);
+
+        Assert.Equal(20, tracker.Current.Average);
+        Assert.Equal(160, tracker.Current.EstimatedChests);
+        Assert.Equal(200, tracker.Current.Total);
+    }
+
+    [Fact]
+    public void Cancelled_scan_stops_between_replays_and_resumes_later()
+    {
+        using var cancellation = new CancellationTokenSource();
+        var tracker = new ChestTracker(StateFile, path =>
+        {
+            cancellation.Cancel();
+            return _outcomes[Path.GetFileName(path)];
+        });
+        AddReplay("a.replay", "id-a", 10);
+        AddReplay("b.replay", "id-b", 30);
+
+        tracker.Scan(Demos, cancellation: cancellation.Token);
+        Assert.Equal(1, tracker.Current.GamesAnalyzed);
+
+        tracker.Scan(Demos);
+        Assert.Equal(2, tracker.Current.GamesAnalyzed);
+    }
+
+    [Fact]
     public void Games_played_survives_a_restart()
     {
         NewTracker().SetGamesPlayed(120);
