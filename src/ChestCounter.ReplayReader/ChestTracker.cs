@@ -9,7 +9,8 @@ public sealed record Summary(int GamesAnalyzed, int Chests, int InProgress, int 
 
     public int GamesWithoutReplay => GamesPlayed is int played ? Math.Max(played - GamesAnalyzed, 0) : 0;
 
-    public double EstimatedChests => Average * GamesWithoutReplay;
+    // Rounded here so the displayed measured and estimated parts add up to the displayed total.
+    public double EstimatedChests => Math.Round(Average * GamesWithoutReplay, MidpointRounding.AwayFromZero);
 
     public double Total => Chests + EstimatedChests;
 }

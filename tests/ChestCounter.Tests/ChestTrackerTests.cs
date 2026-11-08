@@ -133,6 +133,7 @@ public sealed class ChestTrackerTests : IDisposable
 
     [Theory]
     [InlineData(4, 100, 6, 2, 25.0, 50.0, 150.0)]
+    [InlineData(4, 15, 10, 6, 3.75, 23.0, 38.0)]
     [InlineData(4, 100, 4, 0, 25.0, 0.0, 100.0)]
     [InlineData(4, 100, 2, 0, 25.0, 0.0, 100.0)]
     [InlineData(0, 0, 10, 10, 0.0, 0.0, 0.0)]
