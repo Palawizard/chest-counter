@@ -3,14 +3,14 @@ using System.Text.RegularExpressions;
 
 namespace ChestCounter;
 
-public sealed record Summary(int GamesAnalyzed, int Chests, int InProgress, int Failed, int GamesWithoutReplay, double BrokenPerGame = 0)
+public sealed record Summary(int GamesAnalyzed, int Chests, int InProgress, int Failed, int GamesWithoutReplay, double BrokenInMatches = 0, double BrokenPerGame = 0)
 {
     public double Average => GamesAnalyzed == 0 ? 0 : (double)Chests / GamesAnalyzed;
 
     // Rounded here so the displayed measured and estimated parts add up to the displayed total.
     public double EstimatedChests => Math.Round(Average * GamesWithoutReplay, MidpointRounding.AwayFromZero);
 
-    public double EstimatedBroken => Math.Round(BrokenPerGame * (GamesAnalyzed + GamesWithoutReplay), MidpointRounding.AwayFromZero);
+    public double EstimatedBroken => Math.Round(BrokenInMatches + BrokenPerGame * GamesWithoutReplay, MidpointRounding.AwayFromZero);
 
     public double Total => Chests + EstimatedChests + EstimatedBroken;
 }
@@ -25,7 +25,7 @@ public sealed partial class ChestTracker
     private readonly State _state;
     private readonly Dictionary<string, MatchRecord> _matches;
     private readonly HashSet<string> _failedThisRun = [];
-    private readonly HashSet<string> _missingBrokenData;
+    private readonly HashSet<string> _needReanalysis;
     private int _inProgress;
 
     public ChestTracker(string stateFile, Func<string, ReplayOutcome> analyze)
@@ -37,7 +37,7 @@ public sealed partial class ChestTracker
             ? JsonSerializer.Deserialize<State>(File.ReadAllText(stateFile)) ?? throw new InvalidDataException("empty state file")
             : new State();
         _matches = _state.Matches.ToDictionary(m => m.Id);
-        _missingBrokenData = _state.Matches.Where(m => m.DestroyedUnopened is null).Select(m => m.FileName).ToHashSet();
+        _needReanalysis = _state.Matches.Where(m => m.BrokenNearby is null).Select(m => m.FileName).ToHashSet();
     }
 
     public Summary Current
@@ -46,7 +46,8 @@ public sealed partial class ChestTracker
         {
             lock (_gate)
             {
-                return new Summary(_matches.Count, _matches.Values.Sum(m => m.Chests), _inProgress, _failedThisRun.Count, _state.GamesWithoutReplay, BrokenPerGame());
+                var (brokenInMatches, brokenPerGame) = BrokenEstimates();
+                return new Summary(_matches.Count, _matches.Values.Sum(m => m.Chests), _inProgress, _failedThisRun.Count, _state.GamesWithoutReplay, brokenInMatches, brokenPerGame);
             }
         }
     }
@@ -74,7 +75,7 @@ public sealed partial class ChestTracker
             var fileName = Path.GetFileName(path);
             lock (_gate)
             {
-                if ((_state.Processed.Contains(fileName) && !_missingBrokenData.Contains(fileName)) || _failedThisRun.Contains(fileName))
+                if ((_state.Processed.Contains(fileName) && !_needReanalysis.Contains(fileName)) || _failedThisRun.Contains(fileName))
                 {
                     continue;
                 }
@@ -116,7 +117,7 @@ public sealed partial class ChestTracker
     {
         if (_matches.TryGetValue(match.Id, out var known))
         {
-            if (known.DestroyedUnopened is null)
+            if (known.BrokenNearby is null)
             {
                 _state.Matches[_state.Matches.IndexOf(known)] = match;
                 _matches[match.Id] = match;
@@ -129,17 +130,25 @@ public sealed partial class ChestTracker
         }
 
         _state.Processed.Add(fileName);
-        _missingBrokenData.Remove(fileName);
+        _needReanalysis.Remove(fileName);
         Save();
     }
 
-    // Replays do not say who broke a chest, so the player's share of known openings stands in for it.
-    private double BrokenPerGame()
+    // A counted match whose replay is gone still has its opened chests, so it gets the measured
+    // broken-per-opened ratio. A match with no replay at all only has the per-game rate.
+    private (double InMatches, double PerGame) BrokenEstimates()
     {
-        var known = _matches.Values.Where(m => m.DestroyedUnopened is not null).ToList();
-        var own = known.Sum(m => m.Chests);
-        var openings = own + known.Sum(m => m.OtherOpenings ?? 0);
-        return openings == 0 ? 0 : (double)own / openings * known.Sum(m => m.DestroyedUnopened!.Value) / known.Count;
+        var known = _matches.Values.Where(m => m.BrokenNearby is not null).ToList();
+        if (known.Count == 0)
+        {
+            return (0, 0);
+        }
+
+        var broken = known.Sum(m => m.BrokenNearby!.Value);
+        var opened = known.Sum(m => m.Chests);
+        var perOpened = opened == 0 ? 0 : broken / opened;
+        var withoutData = _matches.Values.Where(m => m.BrokenNearby is null).Sum(m => m.Chests);
+        return (broken + perOpened * withoutData, broken / known.Count);
     }
 
     // Written through a temporary file so a crash cannot leave a truncated state behind.

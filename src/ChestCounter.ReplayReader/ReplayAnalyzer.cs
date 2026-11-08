@@ -1,13 +1,15 @@
+using System.Numerics;
+using System.Text.RegularExpressions;
 using FortniteReplayReader.Models.NetFieldExports;
 using Unreal.Core.Contracts;
-using Unreal.Core.Models.Enums;
 using Unreal.Core.Models;
+using Unreal.Core.Models.Enums;
 
 namespace ChestCounter;
 
 public enum ReplayStatus { InProgress, Failed, Analyzed }
 
-public sealed record MatchRecord(string Id, string FileName, DateTime PlayedAt, string Branch, int Chests, int? OtherOpenings = null, int? DestroyedUnopened = null);
+public sealed record MatchRecord(string Id, string FileName, DateTime PlayedAt, string Branch, int Chests, double? BrokenNearby = null);
 
 public sealed record ReplayOutcome(ReplayStatus Status, MatchRecord? Match = null, string? Error = null);
 
@@ -33,8 +35,7 @@ public static class ReplayAnalyzer
                 return new ReplayOutcome(ReplayStatus.Failed, Error: "replay has no owner or id");
             }
 
-            var chests = reader.CountOpenings(recorder);
-            var match = new MatchRecord(replay.Header.Guid, Path.GetFileName(path), replay.Info.Timestamp, replay.Header.Branch, chests, reader.TotalOpenings - chests, reader.DestroyedUnopened);
+            var match = new MatchRecord(replay.Header.Guid, Path.GetFileName(path), replay.Info.Timestamp, replay.Header.Branch, reader.CountOpenings(recorder), reader.EstimateBroken(recorder));
             return new ReplayOutcome(ReplayStatus.Analyzed, match);
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException)
@@ -89,55 +90,114 @@ public static class ReplayAnalyzer
     }
 }
 
-internal sealed class OwnerChestReader : FortniteReplayReader.ReplayReader
+internal sealed partial class OwnerChestReader : FortniteReplayReader.ReplayReader
 {
     private readonly Dictionary<uint, uint> _pawnToPlayerState = [];
     private readonly Dictionary<uint, ChestState> _chests = [];
     private readonly List<uint> _openers = [];
+    private readonly List<double> _openingTimes = [];
+    private readonly Dictionary<uint, uint> _pawnChannels = [];
+    private readonly Dictionary<uint, Vector3> _pawnPositions = [];
+    private readonly HashSet<uint> _lootChannels = [];
+    private readonly List<(double Time, Vector3 At)> _loot = [];
+    private double _worldTime;
 
-    public OwnerChestReader() : base(null!, ParseMode.Normal)
+    // Pawn positions and loot only come through at this level of detail.
+    public OwnerChestReader() : base(null!, ParseMode.Full)
     {
     }
-
-    public int TotalOpenings => _openers.Count;
-
-    public int DestroyedUnopened => _chests.Values.Count(chest => chest.Destroyed && !chest.EverSearched);
 
     public int CountOpenings(uint recorderPlayerState) =>
         _openers.Count(pawn => _pawnToPlayerState.GetValueOrDefault(pawn) == recorderPlayerState);
 
+    public double EstimateBroken(uint recorderPlayerState)
+    {
+        var ownerPawns = _pawnToPlayerState.Where(pair => pair.Value == recorderPlayerState).Select(pair => pair.Key).ToHashSet();
+        var destroyed = _chests.Values
+            .Where(chest => chest.Destroyed is not null && !chest.EverSearched)
+            .Select(chest => chest.Destroyed!.Value)
+            .ToList();
+        return BreakEstimator.Estimate(destroyed, _openingTimes, _loot, ownerPawns);
+    }
+
+    // Many chests vanish by closing their channel without ever replicating bDestroyed.
+    public override bool ReceivedSequencedBunch(DataBunch bunch)
+    {
+        if (bunch.bClose)
+        {
+            if (bunch.CloseReason == ChannelCloseReason.Destroyed
+                && Channels[bunch.ChIndex]?.ActorId is uint actor
+                && _netGuidCache.NetGuidToPathName.TryGetValue(actor, out var path)
+                && ChestPath().IsMatch(path))
+            {
+                MarkDestroyed(StateOf(actor));
+            }
+
+            if (_pawnChannels.Remove(bunch.ChIndex, out var pawn))
+            {
+                _pawnPositions.Remove(pawn);
+            }
+
+            _lootChannels.Remove(bunch.ChIndex);
+        }
+
+        return base.ReceivedSequencedBunch(bunch);
+    }
+
     protected override void OnExportRead(uint channelIndex, INetFieldExportGroup? exportGroup)
     {
         base.OnExportRead(channelIndex, exportGroup);
+        if (exportGroup is GameState state && (state.ReplicatedWorldTimeSecondsDouble ?? state.ReplicatedWorldTimeSeconds) is { } time)
+        {
+            _worldTime = time;
+        }
+
         if (Channels[channelIndex]?.ActorId is not uint actor)
         {
             return;
         }
 
-        if (exportGroup is PlayerPawn { PlayerState: uint playerState and not 0 })
+        switch (exportGroup)
+        {
+            case PlayerPawn pawn:
+                TrackPawn(channelIndex, actor, pawn);
+                break;
+            case FortPickup pickup when pickup.bTossedFromContainer == true && _lootChannels.Add(channelIndex) && Channels[channelIndex]?.Actor?.Location is { } at:
+                _loot.Add((_worldTime, new Vector3((float)at.X, (float)at.Y, (float)at.Z)));
+                break;
+            case SearchableChest chest:
+                Track(actor, chest);
+                break;
+        }
+    }
+
+    private void TrackPawn(uint channelIndex, uint actor, PlayerPawn pawn)
+    {
+        _pawnChannels[channelIndex] = actor;
+        if (pawn.PlayerState is uint playerState and not 0)
         {
             _pawnToPlayerState[actor] = playerState;
         }
-        else if (exportGroup is SearchableChest chest)
+
+        if (pawn.ReplicatedMovement?.Location is { } at)
         {
-            Track(actor, chest);
+            _pawnPositions[actor] = new Vector3((float)at.X, (float)at.Y, (float)at.Z);
         }
     }
 
     // Chests refill during a match, so each false-to-true transition is a separate opening.
     private void Track(uint actor, SearchableChest export)
     {
-        if (!_chests.TryGetValue(actor, out var state))
-        {
-            _chests[actor] = state = new ChestState();
-        }
-
+        var state = StateOf(actor);
         if (export.SearchingPawn is uint pawn and not 0)
         {
             state.LastPawn = pawn;
         }
 
-        state.Destroyed |= export.bDestroyed == true;
+        if (export.bDestroyed == true)
+        {
+            MarkDestroyed(state);
+        }
 
         if (export.bAlreadySearched == false)
         {
@@ -150,15 +210,32 @@ internal sealed class OwnerChestReader : FortniteReplayReader.ReplayReader
             if (state.LastPawn is uint opener)
             {
                 _openers.Add(opener);
+                _openingTimes.Add(_worldTime);
             }
         }
     }
+
+    private ChestState StateOf(uint actor)
+    {
+        if (!_chests.TryGetValue(actor, out var state))
+        {
+            _chests[actor] = state = new ChestState();
+        }
+
+        return state;
+    }
+
+    private void MarkDestroyed(ChestState state) =>
+        state.Destroyed ??= new DestroyedChest(_worldTime, new Dictionary<uint, Vector3>(_pawnPositions));
+
+    [GeneratedRegex("^(Tiered_Chest_Athena|AlwaysSpawn_NormalChest|AlwaysSpawn_RareChest|B_Athena_BuriedChest_Chest|B_TieredChest_Relics|B_SpritePosters_Booty_Chest|B_Delilah_TieredChest_Relics)", RegexOptions.IgnoreCase)]
+    private static partial Regex ChestPath();
 
     private sealed class ChestState
     {
         public uint? LastPawn;
         public bool Searched;
         public bool EverSearched;
-        public bool Destroyed;
+        public DestroyedChest? Destroyed;
     }
 }

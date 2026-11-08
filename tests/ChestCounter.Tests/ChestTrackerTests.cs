@@ -183,26 +183,25 @@ public sealed class ChestTrackerTests : IDisposable
     }
 
     [Fact]
-    public void Broken_chests_use_the_player_share_of_openings_and_cover_games_without_replay()
+    public void Broken_chests_add_each_match_and_cover_games_without_replay()
     {
         var tracker = NewTracker();
         tracker.SetGamesWithoutReplay(1);
-        AddReplay("a.replay", "id-a", 10, otherOpenings: 30, destroyedUnopened: 8);
+        AddReplay("a.replay", "id-a", 10, brokenNearby: 6);
 
         tracker.Scan(Demos);
 
         Assert.Equal(10, tracker.Current.Chests);
-        Assert.Equal(2, tracker.Current.BrokenPerGame);
-        Assert.Equal(4, tracker.Current.EstimatedBroken);
+        Assert.Equal(12, tracker.Current.EstimatedBroken);
         Assert.Equal(10, tracker.Current.EstimatedChests);
-        Assert.Equal(24, tracker.Current.Total);
+        Assert.Equal(32, tracker.Current.Total);
     }
 
     [Fact]
-    public void Old_records_are_upgraded_once_without_being_counted_twice()
+    public void Old_records_are_recalculated_once_without_being_counted_twice()
     {
         WriteOldState(new MatchRecord("id-a", "a.replay", InSeason, Season, 10));
-        AddReplay("a.replay", "id-a", 10, otherOpenings: 30, destroyedUnopened: 8);
+        AddReplay("a.replay", "id-a", 10, brokenNearby: 6);
 
         NewTracker().Scan(Demos);
         Assert.Single(_analyzed);
@@ -214,22 +213,52 @@ public sealed class ChestTrackerTests : IDisposable
         Assert.Empty(_analyzed);
         Assert.Equal(1, restarted.Current.GamesAnalyzed);
         Assert.Equal(10, restarted.Current.Chests);
-        Assert.Equal(2, restarted.Current.BrokenPerGame);
+        Assert.Equal(6, restarted.Current.EstimatedBroken);
     }
 
     [Fact]
-    public void Old_record_whose_replay_is_gone_stays_counted_and_is_left_out_of_the_broken_rate()
+    public void State_written_by_version_1_1_is_recalculated_and_keeps_the_entered_games()
+    {
+        Directory.CreateDirectory(Path.GetDirectoryName(StateFile)!);
+        File.WriteAllText(StateFile, """
+            {"Matches":[{"Id":"id-a","FileName":"a.replay","PlayedAt":"2026-11-08T10:00:00","Branch":"++Fortnite+Release-43.00","Chests":10,"OtherOpenings":30,"DestroyedUnopened":8}],"Processed":["a.replay"],"GamesWithoutReplay":25}
+            """);
+        AddReplay("a.replay", "id-a", 10, brokenNearby: 6);
+
+        var tracker = NewTracker();
+        tracker.Scan(Demos);
+
+        Assert.Single(_analyzed);
+        Assert.Equal(1, tracker.Current.GamesAnalyzed);
+        Assert.Equal(25, tracker.Current.GamesWithoutReplay);
+        Assert.Equal(6 + 6 * 25, tracker.Current.EstimatedBroken);
+    }
+
+    [Fact]
+    public void Counted_match_whose_replay_is_gone_gets_the_measured_ratio_on_its_own_chests()
     {
         WriteOldState(new MatchRecord("id-old", "gone.replay", InSeason, Season, 20));
-        AddReplay("a.replay", "id-a", 10, otherOpenings: 30, destroyedUnopened: 8);
+        AddReplay("a.replay", "id-a", 10, brokenNearby: 5);
 
         var tracker = NewTracker();
         tracker.Scan(Demos);
 
         Assert.Equal(2, tracker.Current.GamesAnalyzed);
         Assert.Equal(30, tracker.Current.Chests);
-        Assert.Equal(2, tracker.Current.BrokenPerGame);
-        Assert.Equal(4, tracker.Current.EstimatedBroken);
+        Assert.Equal(5 + 10, tracker.Current.EstimatedBroken);
+    }
+
+    [Fact]
+    public void Estimate_is_kept_when_a_recalculated_replay_is_deleted_later()
+    {
+        AddReplay("a.replay", "id-a", 10, brokenNearby: 6);
+        NewTracker().Scan(Demos);
+        File.Delete(Path.Combine(Demos, "a.replay"));
+
+        var restarted = NewTracker();
+        restarted.Scan(Demos);
+
+        Assert.Equal(6, restarted.Current.EstimatedBroken);
     }
 
     [Fact]
@@ -277,10 +306,10 @@ public sealed class ChestTrackerTests : IDisposable
         return _outcomes[name];
     });
 
-    private void AddReplay(string fileName, string id, int chests, string branch = Season, DateTime? playedAt = null, int otherOpenings = 0, int destroyedUnopened = 0)
+    private void AddReplay(string fileName, string id, int chests, string branch = Season, DateTime? playedAt = null, double brokenNearby = 0)
     {
         File.WriteAllBytes(Path.Combine(Demos, fileName), []);
-        _outcomes[fileName] = new ReplayOutcome(ReplayStatus.Analyzed, new MatchRecord(id, fileName, playedAt ?? InSeason, branch, chests, otherOpenings, destroyedUnopened));
+        _outcomes[fileName] = new ReplayOutcome(ReplayStatus.Analyzed, new MatchRecord(id, fileName, playedAt ?? InSeason, branch, chests, brokenNearby));
     }
 
     private void WriteOldState(params MatchRecord[] matches)

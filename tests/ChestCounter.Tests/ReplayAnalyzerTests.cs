@@ -21,8 +21,7 @@ public sealed class ReplayAnalyzerTests : IDisposable
         Assert.False(string.IsNullOrEmpty(outcome.Match.Id));
         Assert.Equal(new DateTime(2026, 11, 8), outcome.Match.PlayedAt.Date);
         Assert.InRange(outcome.Match.Chests, 20, 40);
-        Assert.InRange(outcome.Match.OtherOpenings!.Value, 1, 500);
-        Assert.InRange(outcome.Match.DestroyedUnopened!.Value, 0, 500);
+        Assert.InRange(outcome.Match.BrokenNearby!.Value, 0, 60);
     }
 
     [Fact]
