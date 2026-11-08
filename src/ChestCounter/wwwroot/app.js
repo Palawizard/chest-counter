@@ -116,6 +116,7 @@ function render(state) {
   element("estimated").textContent = whole.format(state.estimated + state.broken);
   element("estimated-detail").textContent = `${whole.format(state.estimated)} sur ${whole.format(state.gamesWithoutReplay)} ${plural(state.gamesWithoutReplay, "partie")} sans replay`;
   element("broken").textContent = `${whole.format(state.broken)} ${plural(state.broken, "coffre")} ${plural(state.broken, "cassé")}`;
+  element("broken-average").textContent = state.gamesAnalyzed === 0 ? "" : `Moyenne : ${oneDecimal.format(state.brokenPerGame)} cassés par partie`;
 
   paintStatus(state);
 

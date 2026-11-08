@@ -249,6 +249,33 @@ public sealed class ChestTrackerTests : IDisposable
     }
 
     [Fact]
+    public void Records_from_the_previous_method_are_recalculated_once()
+    {
+        WriteOldState(new MatchRecord("id-a", "a.replay", InSeason, Season, 10, 4));
+        AddReplay("a.replay", "id-a", 10, brokenNearby: 6);
+
+        var tracker = NewTracker();
+        tracker.Scan(Demos);
+        tracker.Scan(Demos);
+
+        Assert.Single(_analyzed);
+        Assert.Equal(6, tracker.Current.EstimatedBroken);
+        Assert.Equal(10, tracker.Current.Chests);
+    }
+
+    [Fact]
+    public void Previous_estimate_is_kept_when_its_replay_is_gone()
+    {
+        WriteOldState(new MatchRecord("id-a", "gone.replay", InSeason, Season, 10, 4));
+
+        var tracker = NewTracker();
+        tracker.Scan(Demos);
+
+        Assert.Empty(_analyzed);
+        Assert.Equal(4, tracker.Current.EstimatedBroken);
+    }
+
+    [Fact]
     public void Estimate_is_kept_when_a_recalculated_replay_is_deleted_later()
     {
         AddReplay("a.replay", "id-a", 10, brokenNearby: 6);
@@ -309,7 +336,7 @@ public sealed class ChestTrackerTests : IDisposable
     private void AddReplay(string fileName, string id, int chests, string branch = Season, DateTime? playedAt = null, double brokenNearby = 0)
     {
         File.WriteAllBytes(Path.Combine(Demos, fileName), []);
-        _outcomes[fileName] = new ReplayOutcome(ReplayStatus.Analyzed, new MatchRecord(id, fileName, playedAt ?? InSeason, branch, chests, brokenNearby));
+        _outcomes[fileName] = new ReplayOutcome(ReplayStatus.Analyzed, new MatchRecord(id, fileName, playedAt ?? InSeason, branch, chests, brokenNearby, MatchRecord.CurrentBrokenMethod));
     }
 
     private void WriteOldState(params MatchRecord[] matches)

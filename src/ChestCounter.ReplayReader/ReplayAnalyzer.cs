@@ -9,7 +9,10 @@ namespace ChestCounter;
 
 public enum ReplayStatus { InProgress, Failed, Analyzed }
 
-public sealed record MatchRecord(string Id, string FileName, DateTime PlayedAt, string Branch, int Chests, double? BrokenNearby = null);
+public sealed record MatchRecord(string Id, string FileName, DateTime PlayedAt, string Branch, int Chests, double? BrokenNearby = null, int BrokenMethod = 0)
+{
+    public const int CurrentBrokenMethod = 1;
+}
 
 public sealed record ReplayOutcome(ReplayStatus Status, MatchRecord? Match = null, string? Error = null);
 
@@ -35,7 +38,7 @@ public static class ReplayAnalyzer
                 return new ReplayOutcome(ReplayStatus.Failed, Error: "replay has no owner or id");
             }
 
-            var match = new MatchRecord(replay.Header.Guid, Path.GetFileName(path), replay.Info.Timestamp, replay.Header.Branch, reader.CountOpenings(recorder), reader.EstimateBroken(recorder));
+            var match = new MatchRecord(replay.Header.Guid, Path.GetFileName(path), replay.Info.Timestamp, replay.Header.Branch, reader.CountOpenings(recorder), reader.EstimateBroken(recorder), MatchRecord.CurrentBrokenMethod);
             return new ReplayOutcome(ReplayStatus.Analyzed, match);
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException)
@@ -110,19 +113,19 @@ internal sealed partial class OwnerChestReader : FortniteReplayReader.ReplayRead
     public int CountOpenings(uint recorderPlayerState) =>
         _openers.Count(pawn => _pawnToPlayerState.GetValueOrDefault(pawn) == recorderPlayerState);
 
+    internal int DestroyedWithLootInside => DestroyedWithLoot().Count;
+
     public double EstimateBroken(uint recorderPlayerState)
     {
         var ownerPawns = _pawnToPlayerState.Where(pair => pair.Value == recorderPlayerState).Select(pair => pair.Key).ToHashSet();
-        var destroyed = _chests.Values
-            .Where(chest => chest.Destroyed is not null && !chest.EverSearched)
-            .Select(chest => chest.Destroyed!.Value)
-            .ToList();
-        return BreakEstimator.Estimate(destroyed, _openingTimes, _loot, ownerPawns);
+        return BreakEstimator.Estimate(DestroyedWithLoot(), _openingTimes, _loot, ownerPawns);
     }
 
-    // Many chests vanish by closing their channel without ever replicating bDestroyed.
+    // Many chests vanish by closing their channel without ever replicating bDestroyed. The closing
+    // bunch is read first because it can still carry the chest's last state.
     public override bool ReceivedSequencedBunch(DataBunch bunch)
     {
+        uint? destroyedChest = null;
         if (bunch.bClose)
         {
             if (bunch.CloseReason == ChannelCloseReason.Destroyed
@@ -130,7 +133,7 @@ internal sealed partial class OwnerChestReader : FortniteReplayReader.ReplayRead
                 && _netGuidCache.NetGuidToPathName.TryGetValue(actor, out var path)
                 && ChestPath().IsMatch(path))
             {
-                MarkDestroyed(StateOf(actor));
+                destroyedChest = actor;
             }
 
             if (_pawnChannels.Remove(bunch.ChIndex, out var pawn))
@@ -141,7 +144,13 @@ internal sealed partial class OwnerChestReader : FortniteReplayReader.ReplayRead
             _lootChannels.Remove(bunch.ChIndex);
         }
 
-        return base.ReceivedSequencedBunch(bunch);
+        var result = base.ReceivedSequencedBunch(bunch);
+        if (destroyedChest is uint chest)
+        {
+            MarkDestroyed(StateOf(chest));
+        }
+
+        return result;
     }
 
     protected override void OnExportRead(uint channelIndex, INetFieldExportGroup? exportGroup)
@@ -186,17 +195,12 @@ internal sealed partial class OwnerChestReader : FortniteReplayReader.ReplayRead
     }
 
     // Chests refill during a match, so each false-to-true transition is a separate opening.
-    private void Track(uint actor, SearchableChest export)
+    internal void Track(uint actor, SearchableChest export)
     {
         var state = StateOf(actor);
         if (export.SearchingPawn is uint pawn and not 0)
         {
             state.LastPawn = pawn;
-        }
-
-        if (export.bDestroyed == true)
-        {
-            MarkDestroyed(state);
         }
 
         if (export.bAlreadySearched == false)
@@ -206,14 +210,23 @@ internal sealed partial class OwnerChestReader : FortniteReplayReader.ReplayRead
         else if (export.bAlreadySearched == true && !state.Searched)
         {
             state.Searched = true;
-            state.EverSearched = true;
             if (state.LastPawn is uint opener)
             {
                 _openers.Add(opener);
                 _openingTimes.Add(_worldTime);
             }
         }
+
+        if (export.bDestroyed == true)
+        {
+            MarkDestroyed(state);
+        }
     }
+
+    private List<DestroyedChest> DestroyedWithLoot() => _chests.Values
+        .Where(chest => chest.Destroyed is not null && !chest.SearchedWhenDestroyed)
+        .Select(chest => chest.Destroyed!.Value)
+        .ToList();
 
     private ChestState StateOf(uint actor)
     {
@@ -225,8 +238,14 @@ internal sealed partial class OwnerChestReader : FortniteReplayReader.ReplayRead
         return state;
     }
 
-    private void MarkDestroyed(ChestState state) =>
-        state.Destroyed ??= new DestroyedChest(_worldTime, new Dictionary<uint, Vector3>(_pawnPositions));
+    private void MarkDestroyed(ChestState state)
+    {
+        if (state.Destroyed is null)
+        {
+            state.SearchedWhenDestroyed = state.Searched;
+            state.Destroyed = new DestroyedChest(_worldTime, new Dictionary<uint, Vector3>(_pawnPositions));
+        }
+    }
 
     [GeneratedRegex("^(Tiered_Chest_Athena|AlwaysSpawn_NormalChest|AlwaysSpawn_RareChest|B_Athena_BuriedChest_Chest|B_TieredChest_Relics|B_SpritePosters_Booty_Chest|B_Delilah_TieredChest_Relics)", RegexOptions.IgnoreCase)]
     private static partial Regex ChestPath();
@@ -235,7 +254,7 @@ internal sealed partial class OwnerChestReader : FortniteReplayReader.ReplayRead
     {
         public uint? LastPawn;
         public bool Searched;
-        public bool EverSearched;
+        public bool SearchedWhenDestroyed;
         public DestroyedChest? Destroyed;
     }
 }

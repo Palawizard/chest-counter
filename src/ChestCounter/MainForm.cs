@@ -31,8 +31,8 @@ internal sealed class MainForm : Form
         AutoScaleMode = AutoScaleMode.Dpi;
         BackColor = WindowGround();
         _view.DefaultBackgroundColor = BackColor;
-        ClientSize = new Size(460, 490);
-        MinimumSize = SizeFromClientSize(new Size(380, 490));
+        ClientSize = new Size(460, 530);
+        MinimumSize = SizeFromClientSize(new Size(380, 530));
         MaximizeBox = false;
         StartPosition = FormStartPosition.CenterScreen;
         Controls.Add(_view);
@@ -146,6 +146,7 @@ internal sealed class MainForm : Form
             gamesWithoutReplay = summary.GamesWithoutReplay,
             estimated = summary.EstimatedChests,
             broken = summary.EstimatedBroken,
+            brokenPerGame = summary.BrokenPerGame,
             total = summary.Total,
             inProgress = summary.InProgress,
             failed = summary.Failed,

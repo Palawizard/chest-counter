@@ -37,7 +37,7 @@ public sealed partial class ChestTracker
             ? JsonSerializer.Deserialize<State>(File.ReadAllText(stateFile)) ?? throw new InvalidDataException("empty state file")
             : new State();
         _matches = _state.Matches.ToDictionary(m => m.Id);
-        _needReanalysis = _state.Matches.Where(m => m.BrokenNearby is null).Select(m => m.FileName).ToHashSet();
+        _needReanalysis = _state.Matches.Where(m => m.BrokenMethod < MatchRecord.CurrentBrokenMethod).Select(m => m.FileName).ToHashSet();
     }
 
     public Summary Current
@@ -117,7 +117,7 @@ public sealed partial class ChestTracker
     {
         if (_matches.TryGetValue(match.Id, out var known))
         {
-            if (known.BrokenNearby is null)
+            if (known.BrokenMethod < MatchRecord.CurrentBrokenMethod)
             {
                 _state.Matches[_state.Matches.IndexOf(known)] = match;
                 _matches[match.Id] = match;
