@@ -183,6 +183,56 @@ public sealed class ChestTrackerTests : IDisposable
     }
 
     [Fact]
+    public void Broken_chests_use_the_player_share_of_openings_and_cover_games_without_replay()
+    {
+        var tracker = NewTracker();
+        tracker.SetGamesWithoutReplay(1);
+        AddReplay("a.replay", "id-a", 10, otherOpenings: 30, destroyedUnopened: 8);
+
+        tracker.Scan(Demos);
+
+        Assert.Equal(10, tracker.Current.Chests);
+        Assert.Equal(2, tracker.Current.BrokenPerGame);
+        Assert.Equal(4, tracker.Current.EstimatedBroken);
+        Assert.Equal(10, tracker.Current.EstimatedChests);
+        Assert.Equal(24, tracker.Current.Total);
+    }
+
+    [Fact]
+    public void Old_records_are_upgraded_once_without_being_counted_twice()
+    {
+        WriteOldState(new MatchRecord("id-a", "a.replay", InSeason, Season, 10));
+        AddReplay("a.replay", "id-a", 10, otherOpenings: 30, destroyedUnopened: 8);
+
+        NewTracker().Scan(Demos);
+        Assert.Single(_analyzed);
+        _analyzed.Clear();
+
+        var restarted = NewTracker();
+        restarted.Scan(Demos);
+
+        Assert.Empty(_analyzed);
+        Assert.Equal(1, restarted.Current.GamesAnalyzed);
+        Assert.Equal(10, restarted.Current.Chests);
+        Assert.Equal(2, restarted.Current.BrokenPerGame);
+    }
+
+    [Fact]
+    public void Old_record_whose_replay_is_gone_stays_counted_and_is_left_out_of_the_broken_rate()
+    {
+        WriteOldState(new MatchRecord("id-old", "gone.replay", InSeason, Season, 20));
+        AddReplay("a.replay", "id-a", 10, otherOpenings: 30, destroyedUnopened: 8);
+
+        var tracker = NewTracker();
+        tracker.Scan(Demos);
+
+        Assert.Equal(2, tracker.Current.GamesAnalyzed);
+        Assert.Equal(30, tracker.Current.Chests);
+        Assert.Equal(2, tracker.Current.BrokenPerGame);
+        Assert.Equal(4, tracker.Current.EstimatedBroken);
+    }
+
+    [Fact]
     public void Games_without_replay_survive_a_restart()
     {
         NewTracker().SetGamesWithoutReplay(120);
@@ -227,9 +277,15 @@ public sealed class ChestTrackerTests : IDisposable
         return _outcomes[name];
     });
 
-    private void AddReplay(string fileName, string id, int chests, string branch = Season, DateTime? playedAt = null)
+    private void AddReplay(string fileName, string id, int chests, string branch = Season, DateTime? playedAt = null, int otherOpenings = 0, int destroyedUnopened = 0)
     {
         File.WriteAllBytes(Path.Combine(Demos, fileName), []);
-        _outcomes[fileName] = new ReplayOutcome(ReplayStatus.Analyzed, new MatchRecord(id, fileName, playedAt ?? InSeason, branch, chests));
+        _outcomes[fileName] = new ReplayOutcome(ReplayStatus.Analyzed, new MatchRecord(id, fileName, playedAt ?? InSeason, branch, chests, otherOpenings, destroyedUnopened));
+    }
+
+    private void WriteOldState(params MatchRecord[] matches)
+    {
+        Directory.CreateDirectory(Path.GetDirectoryName(StateFile)!);
+        File.WriteAllText(StateFile, System.Text.Json.JsonSerializer.Serialize(new { Matches = matches, Processed = matches.Select(m => m.FileName), GamesWithoutReplay = 0 }));
     }
 }

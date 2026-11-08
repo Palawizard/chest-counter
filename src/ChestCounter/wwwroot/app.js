@@ -113,8 +113,9 @@ function render(state) {
     ? "Aucune partie lue pour l'instant"
     : `${plural(state.chests, "coffre")} ${state.chests >= 2 ? "comptés" : "compté"} sur ${whole.format(state.gamesAnalyzed)} ${plural(state.gamesAnalyzed, "partie")}`;
   element("average").textContent = state.gamesAnalyzed === 0 ? "" : `Moyenne : ${oneDecimal.format(state.average)}`;
-  element("estimated").textContent = whole.format(state.estimated);
-  element("estimated-detail").textContent = `${plural(state.estimated, "coffre")} sur ${whole.format(state.gamesWithoutReplay)} ${plural(state.gamesWithoutReplay, "partie")} sans replay`;
+  element("estimated").textContent = whole.format(state.estimated + state.broken);
+  element("estimated-detail").textContent = `${whole.format(state.estimated)} sur ${whole.format(state.gamesWithoutReplay)} ${plural(state.gamesWithoutReplay, "partie")} sans replay`;
+  element("broken").textContent = `${whole.format(state.broken)} ${plural(state.broken, "coffre")} ${plural(state.broken, "cassé")}`;
 
   paintStatus(state);
 

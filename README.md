@@ -52,6 +52,6 @@ Every opening of a chest by the replay owner: regular, rare, buried, relic and w
 ## Limits
 
 - Fortnite keeps about 100 replays. A match whose replay is deleted before the app reads it can only be estimated, so run the app at least once every 100 matches.
-- Chests broken instead of opened, and relic finder chests, cannot be attributed to a player and are not counted.
+- Replays do not say who broke a chest. Chests broken without being opened are estimated: the unopened chests destroyed per match, times your share of all known openings. The estimate is shown apart from the measured count, which is the number to compare with the in-game counter. Relic finder chests cannot be attributed and are not counted.
 - A new chest type added by a game update is ignored until its class is added to `ChestExports.cs`.
 - All game modes present in the replay folder are counted.

@@ -13,6 +13,9 @@ public abstract class SearchableChest : INetFieldExportGroup
 
     [NetFieldExport("SearchingPawn", RepLayoutCmdType.PropertyObject)]
     public uint? SearchingPawn { get; set; }
+
+    [NetFieldExport("bDestroyed", RepLayoutCmdType.PropertyBool)]
+    public bool? bDestroyed { get; set; }
 }
 
 [NetFieldExportGroup("/Game/Building/ActorBlueprints/Containers/Tiered_Chest_Athena.Tiered_Chest_Athena_C", ParseMode.Normal)]

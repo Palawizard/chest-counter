@@ -7,7 +7,7 @@ namespace ChestCounter;
 
 public enum ReplayStatus { InProgress, Failed, Analyzed }
 
-public sealed record MatchRecord(string Id, string FileName, DateTime PlayedAt, string Branch, int Chests);
+public sealed record MatchRecord(string Id, string FileName, DateTime PlayedAt, string Branch, int Chests, int? OtherOpenings = null, int? DestroyedUnopened = null);
 
 public sealed record ReplayOutcome(ReplayStatus Status, MatchRecord? Match = null, string? Error = null);
 
@@ -33,7 +33,8 @@ public static class ReplayAnalyzer
                 return new ReplayOutcome(ReplayStatus.Failed, Error: "replay has no owner or id");
             }
 
-            var match = new MatchRecord(replay.Header.Guid, Path.GetFileName(path), replay.Info.Timestamp, replay.Header.Branch, reader.CountOpenings(recorder));
+            var chests = reader.CountOpenings(recorder);
+            var match = new MatchRecord(replay.Header.Guid, Path.GetFileName(path), replay.Info.Timestamp, replay.Header.Branch, chests, reader.TotalOpenings - chests, reader.DestroyedUnopened);
             return new ReplayOutcome(ReplayStatus.Analyzed, match);
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException)
@@ -98,6 +99,10 @@ internal sealed class OwnerChestReader : FortniteReplayReader.ReplayReader
     {
     }
 
+    public int TotalOpenings => _openers.Count;
+
+    public int DestroyedUnopened => _chests.Values.Count(chest => chest.Destroyed && !chest.EverSearched);
+
     public int CountOpenings(uint recorderPlayerState) =>
         _openers.Count(pawn => _pawnToPlayerState.GetValueOrDefault(pawn) == recorderPlayerState);
 
@@ -132,6 +137,8 @@ internal sealed class OwnerChestReader : FortniteReplayReader.ReplayReader
             state.LastPawn = pawn;
         }
 
+        state.Destroyed |= export.bDestroyed == true;
+
         if (export.bAlreadySearched == false)
         {
             state.Searched = false;
@@ -139,6 +146,7 @@ internal sealed class OwnerChestReader : FortniteReplayReader.ReplayReader
         else if (export.bAlreadySearched == true && !state.Searched)
         {
             state.Searched = true;
+            state.EverSearched = true;
             if (state.LastPawn is uint opener)
             {
                 _openers.Add(opener);
@@ -150,5 +158,7 @@ internal sealed class OwnerChestReader : FortniteReplayReader.ReplayReader
     {
         public uint? LastPawn;
         public bool Searched;
+        public bool EverSearched;
+        public bool Destroyed;
     }
 }

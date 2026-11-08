@@ -145,6 +145,7 @@ internal sealed class MainForm : Form
             average = summary.Average,
             gamesWithoutReplay = summary.GamesWithoutReplay,
             estimated = summary.EstimatedChests,
+            broken = summary.EstimatedBroken,
             total = summary.Total,
             inProgress = summary.InProgress,
             failed = summary.Failed,
