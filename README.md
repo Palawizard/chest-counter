@@ -34,6 +34,17 @@ Without a replay:
 dotnet test --filter "Category!=RealReplay"
 ```
 
+## Installer
+
+Building the installer requires [Inno Setup 6](https://jrsoftware.org/isinfo.php). From PowerShell:
+
+```
+dotnet publish src/ChestCounter -c Release -r win-x64 --self-contained -o dist/app
+& "$env:LOCALAPPDATA\Programs\Inno Setup 6\ISCC.exe" installer\ChestCounter.iss
+```
+
+The result is `dist\ChestCounter-Setup-<version>.exe`. It installs for the current user without administrator rights and includes .NET. Uninstalling keeps the saved results. The installer is not signed, so Windows SmartScreen warns before it runs.
+
 ## What is counted
 
 Every opening of a chest by the replay owner: regular, rare, buried, relic and wanted poster chests. A chest that refills and is opened again counts again. Ammo boxes and coolers are not counted.
