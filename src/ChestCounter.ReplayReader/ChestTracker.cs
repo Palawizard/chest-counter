@@ -3,11 +3,9 @@ using System.Text.RegularExpressions;
 
 namespace ChestCounter;
 
-public sealed record Summary(int GamesAnalyzed, int Chests, int InProgress, int Failed, int? GamesPlayed)
+public sealed record Summary(int GamesAnalyzed, int Chests, int InProgress, int Failed, int GamesWithoutReplay)
 {
     public double Average => GamesAnalyzed == 0 ? 0 : (double)Chests / GamesAnalyzed;
-
-    public int GamesWithoutReplay => GamesPlayed is int played ? Math.Max(played - GamesAnalyzed, 0) : 0;
 
     // Rounded here so the displayed measured and estimated parts add up to the displayed total.
     public double EstimatedChests => Math.Round(Average * GamesWithoutReplay, MidpointRounding.AwayFromZero);
@@ -44,17 +42,17 @@ public sealed partial class ChestTracker
         {
             lock (_gate)
             {
-                return new Summary(_matches.Count, _matches.Values.Sum(m => m.Chests), _inProgress, _failedThisRun.Count, _state.GamesPlayed);
+                return new Summary(_matches.Count, _matches.Values.Sum(m => m.Chests), _inProgress, _failedThisRun.Count, _state.GamesWithoutReplay);
             }
         }
     }
 
-    public void SetGamesPlayed(int? gamesPlayed)
+    public void SetGamesWithoutReplay(int games)
     {
-        ArgumentOutOfRangeException.ThrowIfNegative(gamesPlayed ?? 0);
+        ArgumentOutOfRangeException.ThrowIfNegative(games);
         lock (_gate)
         {
-            _state.GamesPlayed = gamesPlayed;
+            _state.GamesWithoutReplay = games;
             Save();
         }
     }
@@ -138,6 +136,6 @@ public sealed partial class ChestTracker
 
         public HashSet<string> Processed { get; set; } = [];
 
-        public int? GamesPlayed { get; set; }
+        public int GamesWithoutReplay { get; set; }
     }
 }

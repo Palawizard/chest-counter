@@ -132,17 +132,15 @@ public sealed class ChestTrackerTests : IDisposable
     }
 
     [Theory]
-    [InlineData(4, 100, 6, 2, 25.0, 50.0, 150.0)]
-    [InlineData(4, 15, 10, 6, 3.75, 23.0, 38.0)]
-    [InlineData(4, 100, 4, 0, 25.0, 0.0, 100.0)]
-    [InlineData(4, 100, 2, 0, 25.0, 0.0, 100.0)]
-    [InlineData(0, 0, 10, 10, 0.0, 0.0, 0.0)]
-    public void Estimate_extrapolates_the_average_to_games_without_replay(int analyzed, int chests, int played, int missing, double average, double estimated, double total)
+    [InlineData(4, 100, 2, 25.0, 50.0, 150.0)]
+    [InlineData(4, 15, 6, 3.75, 23.0, 38.0)]
+    [InlineData(4, 100, 0, 25.0, 0.0, 100.0)]
+    [InlineData(0, 0, 10, 0.0, 0.0, 0.0)]
+    public void Estimate_extrapolates_the_average_to_games_without_replay(int analyzed, int chests, int withoutReplay, double average, double estimated, double total)
     {
-        var summary = new Summary(analyzed, chests, 0, 0, played);
+        var summary = new Summary(analyzed, chests, 0, 0, withoutReplay);
 
         Assert.Equal(average, summary.Average);
-        Assert.Equal(missing, summary.GamesWithoutReplay);
         Assert.Equal(estimated, summary.EstimatedChests);
         Assert.Equal(total, summary.Total);
     }
@@ -151,7 +149,7 @@ public sealed class ChestTrackerTests : IDisposable
     public void Estimate_follows_the_average_when_a_new_replay_arrives()
     {
         var tracker = NewTracker();
-        tracker.SetGamesPlayed(10);
+        tracker.SetGamesWithoutReplay(9);
         AddReplay("a.replay", "id-a", 10);
         tracker.Scan(Demos);
         Assert.Equal(90, tracker.Current.EstimatedChests);
@@ -159,9 +157,10 @@ public sealed class ChestTrackerTests : IDisposable
         AddReplay("b.replay", "id-b", 30);
         tracker.Scan(Demos);
 
+        Assert.Equal(9, tracker.Current.GamesWithoutReplay);
         Assert.Equal(20, tracker.Current.Average);
-        Assert.Equal(160, tracker.Current.EstimatedChests);
-        Assert.Equal(200, tracker.Current.Total);
+        Assert.Equal(180, tracker.Current.EstimatedChests);
+        Assert.Equal(220, tracker.Current.Total);
     }
 
     [Fact]
@@ -184,11 +183,31 @@ public sealed class ChestTrackerTests : IDisposable
     }
 
     [Fact]
-    public void Games_played_survives_a_restart()
+    public void Games_without_replay_survive_a_restart()
     {
-        NewTracker().SetGamesPlayed(120);
+        NewTracker().SetGamesWithoutReplay(120);
 
-        Assert.Equal(120, NewTracker().Current.GamesPlayed);
+        Assert.Equal(120, NewTracker().Current.GamesWithoutReplay);
+    }
+
+    [Fact]
+    public void Matches_stay_counted_as_replays_are_deleted_one_by_one()
+    {
+        AddReplay("a.replay", "id-a", 10);
+        AddReplay("b.replay", "id-b", 20);
+        var tracker = NewTracker();
+        tracker.Scan(Demos);
+
+        File.Delete(Path.Combine(Demos, "a.replay"));
+        AddReplay("c.replay", "id-c", 30);
+        tracker.Scan(Demos);
+        File.Delete(Path.Combine(Demos, "b.replay"));
+        File.Delete(Path.Combine(Demos, "c.replay"));
+        var restarted = NewTracker();
+        restarted.Scan(Demos);
+
+        Assert.Equal(3, restarted.Current.GamesAnalyzed);
+        Assert.Equal(60, restarted.Current.Chests);
     }
 
     [Fact]

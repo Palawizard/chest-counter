@@ -15,7 +15,7 @@ internal sealed class MainForm : Form
     private readonly Label _estimated = NewValue();
     private readonly Label _total = NewValue();
     private readonly Label _status = new() { AutoSize = true, Padding = new Padding(0, 8, 0, 0) };
-    private readonly NumericUpDown _gamesPlayed = new() { Minimum = 0, Maximum = 100000, Width = 90, AccessibleName = "Parties jouées depuis le 1er novembre" };
+    private readonly NumericUpDown _gamesWithoutReplay = new() { Minimum = 0, Maximum = 100000, Width = 90, AccessibleName = "Parties sans replay" };
     private ReplayFolderWatcher? _watcher;
     private volatile bool _scanning;
     private string? _error;
@@ -37,7 +37,7 @@ internal sealed class MainForm : Form
         AddRow(layout, "Parties analysées", _games);
         AddRow(layout, "Coffres comptés", _chests);
         AddRow(layout, "Moyenne par partie", _average);
-        AddRow(layout, "Parties jouées depuis le 1er novembre", _gamesPlayed);
+        AddRow(layout, "Parties sans replay", _gamesWithoutReplay);
         AddRow(layout, "Part mesurée", _measured);
         AddRow(layout, "Part estimée", _estimated);
         AddRow(layout, "Total estimé", _total);
@@ -45,10 +45,10 @@ internal sealed class MainForm : Form
         layout.SetColumnSpan(_status, 2);
         Controls.Add(layout);
 
-        _gamesPlayed.Value = tracker.Current.GamesPlayed ?? 0;
-        _gamesPlayed.ValueChanged += (_, _) =>
+        _gamesWithoutReplay.Value = tracker.Current.GamesWithoutReplay;
+        _gamesWithoutReplay.ValueChanged += (_, _) =>
         {
-            _tracker.SetGamesPlayed(_gamesPlayed.Value == 0 ? null : (int)_gamesPlayed.Value);
+            _tracker.SetGamesWithoutReplay((int)_gamesWithoutReplay.Value);
             Refresh(_tracker.Current);
         };
         Refresh(tracker.Current);
@@ -106,21 +106,8 @@ internal sealed class MainForm : Form
         _average.Text = summary.Average.ToString("N1", French);
         _measured.Text = $"{summary.Chests.ToString("N0", French)} coffres sur {summary.GamesAnalyzed.ToString("N0", French)} parties";
 
-        if (summary.GamesPlayed is null)
-        {
-            _estimated.Text = "Indique tes parties jouées";
-            _total.Text = "-";
-        }
-        else if (summary.GamesPlayed < summary.GamesAnalyzed)
-        {
-            _estimated.Text = $"Indique au moins {summary.GamesAnalyzed.ToString("N0", French)} parties";
-            _total.Text = "-";
-        }
-        else
-        {
-            _estimated.Text = $"{summary.EstimatedChests.ToString("N0", French)} coffres sur {summary.GamesWithoutReplay.ToString("N0", French)} parties sans replay";
-            _total.Text = $"{summary.Total.ToString("N0", French)} coffres";
-        }
+        _estimated.Text = $"{summary.EstimatedChests.ToString("N0", French)} coffres sur {summary.GamesWithoutReplay.ToString("N0", French)} parties sans replay";
+        _total.Text = $"{summary.Total.ToString("N0", French)} coffres";
 
         _status.Text = _error ?? string.Join(" ", new[]
         {
