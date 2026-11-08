@@ -11,7 +11,7 @@ public enum ReplayStatus { InProgress, Failed, Analyzed }
 
 public sealed record MatchRecord(string Id, string FileName, DateTime PlayedAt, string Branch, int Chests, double? BrokenNearby = null, int BrokenMethod = 0)
 {
-    public const int CurrentBrokenMethod = 1;
+    public const int CurrentBrokenMethod = 2;
 }
 
 public sealed record ReplayOutcome(ReplayStatus Status, MatchRecord? Match = null, string? Error = null);
@@ -24,7 +24,7 @@ public static class ReplayAnalyzer
     {
         try
         {
-            using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+            using var stream = OpenShared(path);
             if (IsInProgress(stream))
             {
                 return new ReplayOutcome(ReplayStatus.InProgress);
@@ -38,7 +38,9 @@ public static class ReplayAnalyzer
                 return new ReplayOutcome(ReplayStatus.Failed, Error: "replay has no owner or id");
             }
 
-            var match = new MatchRecord(replay.Header.Guid, Path.GetFileName(path), replay.Info.Timestamp, replay.Header.Branch, reader.CountOpenings(recorder), reader.EstimateBroken(recorder), MatchRecord.CurrentBrokenMethod);
+            using var drivingStream = OpenShared(path);
+            var driving = new OwnerDrivingReader().ReadOwnerDrivingTimes(drivingStream);
+            var match = new MatchRecord(replay.Header.Guid, Path.GetFileName(path), replay.Info.Timestamp, replay.Header.Branch, reader.CountOpenings(recorder), reader.EstimateBroken(recorder, driving), MatchRecord.CurrentBrokenMethod);
             return new ReplayOutcome(ReplayStatus.Analyzed, match);
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException)
@@ -50,6 +52,9 @@ public static class ReplayAnalyzer
             return new ReplayOutcome(ReplayStatus.Failed, Error: $"{e.GetType().Name}: {e.Message}");
         }
     }
+
+    private static FileStream OpenShared(string path) =>
+        new(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
 
     // Reads the flag directly: the library loads the whole file before rejecting a live replay,
     // which is too heavy to repeat while the game is writing it.
@@ -115,10 +120,10 @@ internal sealed partial class OwnerChestReader : FortniteReplayReader.ReplayRead
 
     internal int DestroyedWithLootInside => DestroyedWithLoot().Count;
 
-    public double EstimateBroken(uint recorderPlayerState)
+    public double EstimateBroken(uint recorderPlayerState, IReadOnlyList<double> drivingTimes)
     {
         var ownerPawns = _pawnToPlayerState.Where(pair => pair.Value == recorderPlayerState).Select(pair => pair.Key).ToHashSet();
-        return BreakEstimator.Estimate(DestroyedWithLoot(), _openingTimes, _loot, ownerPawns);
+        return BreakEstimator.Estimate(DestroyedWithLoot(), _openingTimes, _loot, ownerPawns, drivingTimes);
     }
 
     // Many chests vanish by closing their channel without ever replicating bDestroyed. The closing
