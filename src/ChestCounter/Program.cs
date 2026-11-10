@@ -8,8 +8,8 @@ internal static class Program
     private static int Main(string[] args)
     {
         VelopackApp.Build()
-            .OnAfterInstallFastCallback(_ => LegacyInstall.Remove())
-            .OnAfterUpdateFastCallback(_ => LegacyInstall.Remove())
+            .OnAfterInstallFastCallback(_ => AfterInstallOrUpdate())
+            .OnAfterUpdateFastCallback(_ => AfterInstallOrUpdate())
             .Run();
 
         var localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
@@ -47,5 +47,11 @@ internal static class Program
 
         Application.Run(new MainForm(tracker, demos, Path.Combine(Path.GetDirectoryName(Path.GetFullPath(stateFile))!, "WebView2")));
         return 0;
+    }
+
+    private static void AfterInstallOrUpdate()
+    {
+        LegacyInstall.Remove();
+        ShellIcons.Refresh();
     }
 }
