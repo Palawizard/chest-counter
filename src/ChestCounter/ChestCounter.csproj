@@ -9,6 +9,7 @@
     <Company>Palawi</Company>
     <Copyright>Copyright (c) 2026 Palawi</Copyright>
     <RuntimeIdentifiers>win-x64</RuntimeIdentifiers>
+    <SatelliteResourceLanguages>en;fr</SatelliteResourceLanguages>
     <!-- WebView2 ships a WPF assembly this app never loads; its WindowsBase reference is harmless. -->
     <NoWarn>$(NoWarn);MSB3277</NoWarn>
   </PropertyGroup>

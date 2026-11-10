@@ -1,3 +1,4 @@
+; Archived: replaced by the Velopack installer and updater built by scripts/release.ps1.
 #define AppName "Compteur de coffres"
 #define AppExe "ChestCounter.exe"
 #define PublishDir "..\dist\app"
