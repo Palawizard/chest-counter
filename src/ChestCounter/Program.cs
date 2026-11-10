@@ -7,7 +7,10 @@ internal static class Program
     [STAThread]
     private static int Main(string[] args)
     {
-        VelopackApp.Build().Run();
+        VelopackApp.Build()
+            .OnAfterInstallFastCallback(_ => LegacyInstall.Remove())
+            .OnAfterUpdateFastCallback(_ => LegacyInstall.Remove())
+            .Run();
 
         var localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
         var demos = args.Length > 0 ? args[0] : Path.Combine(localAppData, "FortniteGame", "Saved", "Demos");
