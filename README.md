@@ -6,7 +6,7 @@
 
 <p align="center">
   Count every chest you open in Fortnite, match by match, from the replays already on your PC.<br>
-  Free, open source, offline, for Windows.
+  A free and open-source Windows app that works offline.
 </p>
 
 <p align="center">
@@ -23,13 +23,13 @@ It reads the replay files Fortnite saves after each match, finds every chest you
 
 ## Features
 
-- **Counted, not guessed.** Each chest opening is read from your own replays, one by one.
-- **Measured and estimated stay apart.** Matches without a replay and chests you broke instead of opening are estimated, and shown on their own line, so you always know which part of the total is proven.
-- **Keeps your history.** Fortnite only keeps about 100 replays. Chest Counter saves every match it reads, so deleted replays stay counted.
-- **Works offline.** No account, no login, no Epic or tracker API. Your replays never leave your PC.
-- **Quiet.** One window, one number to enter once, no animation while you play.
-- **French and English**, picked from your Windows language.
-- **Updates itself** in the background from GitHub releases.
+- Each chest opening is read from your own replays.
+- Matches without a replay and chests you broke instead of opening are estimated on a separate line, so the measured part of the total stays visible.
+- Fortnite only keeps about 100 replays. Chest Counter saves every match it reads, so a deleted replay stays counted.
+- No account or login, and no Epic or tracker API. Your replays stay on your PC.
+- The window has a single field to fill in once, and nothing moves while you play.
+- French or English, depending on your Windows language.
+- New versions install themselves from GitHub releases.
 
 ## How it compares
 
@@ -44,9 +44,9 @@ As of November 2026, the other ways to know how many chests you opened:
 | Works offline | Yes | No | No |
 | Open source | Yes | No | No |
 
-The in-game counter is the reference: Chest Counter's measured part is the number to compare it with. What Chest Counter adds is where the number comes from, what happens to matches whose replay is gone, and a count you can keep an eye on without opening the game menu.
+The in-game counter is the reference, and Chest Counter's measured part is the number to compare it with. Chest Counter shows how that number was reached and estimates the matches whose replay is gone. You can also keep it open next to the game instead of checking the Quests tab.
 
-Replay libraries such as [FortniteReplayDecompressor](https://github.com/Shiqan/FortniteReplayDecompressor) can read chest data, but they are libraries for developers, not an app. Chest Counter is built on it.
+Replay libraries such as [FortniteReplayDecompressor](https://github.com/Shiqan/FortniteReplayDecompressor) can read chest data from a replay. They are meant for developers to build on, and Chest Counter is built on that one.
 
 ## Install
 
@@ -64,10 +64,7 @@ Uninstall from **Settings > Apps**. Your counted matches are kept in `%LOCALAPPD
 
 Open Chest Counter and leave it open or minimized while you play. A match is counted once it has ended: Fortnite encrypts the replay of a match in progress until the match is over.
 
-The big number is the estimated total. Under it:
-
-- **Read from replays**: chests opened in matches that have a replay. This is the number to compare with the in-game counter.
-- **Estimated**: chests from matches without a replay, plus chests you broke without opening them.
+The big number is the estimated total. The line under it, Read from replays, counts the chests opened in matches that have a replay; compare this one with the in-game counter. The next line, Estimated, adds the chests from matches without a replay and the chests you broke without opening them.
 
 If you played matches before installing Chest Counter, or Fortnite already deleted their replays, enter how many in **Matches without a replay**. They are estimated from your current average.
 
