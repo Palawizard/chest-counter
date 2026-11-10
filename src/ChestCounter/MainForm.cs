@@ -10,8 +10,8 @@ internal sealed class MainForm : Form
     private const string Host = "chest-counter.example";
     private const string Origin = $"https://{Host}/";
     private const int MaxGamesWithoutReplay = 100000;
-    private static readonly Color Enamel = Color.FromArgb(3, 57, 127);
-    private static readonly Color Porcelain = Color.FromArgb(243, 245, 248);
+    private static readonly Color DarkPage = Color.FromArgb(21, 68, 51);
+    private static readonly Color LightPage = Color.FromArgb(241, 246, 242);
 
     private readonly ChestTracker _tracker;
     private readonly string _demos;
@@ -26,12 +26,13 @@ internal sealed class MainForm : Form
         _tracker = tracker;
         _demos = demos;
         _webDataFolder = webDataFolder;
-        Text = "Compteur de coffres";
+        Text = ChestCounter.Text.AppName;
+        Icon = new Icon(Path.Combine(AppContext.BaseDirectory, "app.ico"));
         AutoScaleDimensions = new SizeF(96F, 96F);
         AutoScaleMode = AutoScaleMode.Dpi;
         BackColor = WindowGround();
         _view.DefaultBackgroundColor = BackColor;
-        ClientSize = new Size(460, 530);
+        ClientSize = new Size(460, 560);
         MinimumSize = SizeFromClientSize(new Size(380, 530));
         MaximizeBox = false;
         StartPosition = FormStartPosition.CenterScreen;
@@ -43,12 +44,12 @@ internal sealed class MainForm : Form
         base.OnShown(e);
         try
         {
-            var environment = await CoreWebView2Environment.CreateAsync(userDataFolder: _webDataFolder);
+            var environment = await CoreWebView2Environment.CreateAsync(userDataFolder: _webDataFolder, options: new CoreWebView2EnvironmentOptions { Language = ChestCounter.Text.Language });
             await _view.EnsureCoreWebView2Async(environment);
         }
         catch (Exception exception) when (exception is WebView2RuntimeNotFoundException or COMException or InvalidOperationException or IOException)
         {
-            MessageBox.Show("L'affichage n'a pas pu démarrer. Installe le composant Microsoft Edge WebView2, puis relance l'application.", Text, MessageBoxButtons.OK, MessageBoxIcon.Error);
+            MessageBox.Show(ChestCounter.Text.Pick("L'affichage n'a pas pu démarrer. Installe le composant Microsoft Edge WebView2, puis relance l'application.", "The window could not start. Install Microsoft Edge WebView2, then open the app again."), Text, MessageBoxButtons.OK, MessageBoxIcon.Error);
             Close();
             return;
         }
@@ -63,7 +64,7 @@ internal sealed class MainForm : Form
         core.NavigationStarting += (_, args) => args.Cancel = !args.Uri.StartsWith(Origin, StringComparison.Ordinal);
         core.NewWindowRequested += (_, args) => args.Handled = true;
         core.WebMessageReceived += OnPageMessage;
-        core.Navigate(Origin + "index.html");
+        core.Navigate(Origin + "index.html?lang=" + ChestCounter.Text.Language);
     }
 
     protected override void OnFormClosed(FormClosedEventArgs e)
@@ -75,8 +76,8 @@ internal sealed class MainForm : Form
     // Matches the page's system-theme palette so the window does not flash the other colour while loading.
     private static Color WindowGround() =>
         Microsoft.Win32.Registry.GetValue(@"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize", "AppsUseLightTheme", 0) is int and not 0
-            ? Porcelain
-            : Enamel;
+            ? LightPage
+            : DarkPage;
 
     private void OnPageMessage(object? sender, CoreWebView2WebMessageReceivedEventArgs e)
     {
@@ -100,7 +101,7 @@ internal sealed class MainForm : Form
         }
         catch (Exception exception) when (exception is JsonException or KeyNotFoundException or InvalidOperationException or IOException or UnauthorizedAccessException)
         {
-            _error = "L'enregistrement a échoué. Réessaie dans un instant.";
+            _error = "save";
         }
 
         PostState();
@@ -118,7 +119,7 @@ internal sealed class MainForm : Form
     private void ShowError(Exception exception)
     {
         _scanning = false;
-        _error = "La lecture du dossier a échoué. Nouvel essai dans 30 secondes.";
+        _error = "read";
         RequestState();
     }
 

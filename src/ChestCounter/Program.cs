@@ -15,7 +15,11 @@ internal static class Program
 
         if (!Directory.Exists(demos))
         {
-            MessageBox.Show($"Dossier des replays introuvable :\n{demos}", "Compteur de coffres", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            MessageBox.Show(
+                Text.Pick(
+                    $"Aucun replay Fortnite trouvé. Active l'enregistrement des replays dans les réglages de Fortnite, joue une partie, puis relance l'application.\n\n{demos}",
+                    $"No Fortnite replays found. Turn on replay recording in the Fortnite settings, play a match, then open the app again.\n\n{demos}"),
+                Text.AppName, MessageBoxButtons.OK, MessageBoxIcon.Error);
             return 1;
         }
 
@@ -26,7 +30,11 @@ internal static class Program
         }
         catch (Exception e) when (e is System.Text.Json.JsonException or InvalidDataException or IOException)
         {
-            MessageBox.Show($"Les données enregistrées sont illisibles et n'ont pas été modifiées :\n{stateFile}", "Compteur de coffres", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            MessageBox.Show(
+                Text.Pick(
+                    $"Les données enregistrées sont illisibles et n'ont pas été modifiées :\n{stateFile}",
+                    $"The saved data cannot be read and was left unchanged:\n{stateFile}"),
+                Text.AppName, MessageBoxButtons.OK, MessageBoxIcon.Error);
             return 1;
         }
 

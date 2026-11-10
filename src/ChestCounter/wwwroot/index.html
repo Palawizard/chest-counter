@@ -3,45 +3,59 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self'; script-src 'self'">
-  <title>Compteur de coffres</title>
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self'; script-src 'self'; font-src 'self'; img-src 'self'">
+  <title>Chest Counter</title>
   <link rel="stylesheet" href="app.css">
 </head>
 <body>
-  <main class="plate">
-    <h1>Total estimé <span class="unit">en coffres</span></h1>
-    <div class="odometer" id="odometer" role="img"></div>
+  <header class="cover">
+    <img class="mark" src="icon.svg" alt="" width="28" height="28">
+    <span class="name" data-t="appName"></span>
+  </header>
 
-    <div class="parts">
-      <section class="part part-measured" aria-labelledby="measured-title">
-        <h2 id="measured-title">Part mesurée</h2>
+  <main class="page">
+    <section class="balance" aria-labelledby="total-label">
+      <h1 id="total-label"><span data-t="total"></span> <span class="unit" data-t="inChests"></span></h1>
+      <p class="total" id="total">0</p>
+      <p class="stamp" id="stamp" hidden><span data-t="upToDate"></span><span id="stamp-time"></span></p>
+    </section>
+
+    <div class="entries">
+      <section class="entry entry-measured" aria-labelledby="measured-title">
+        <h2 id="measured-title" data-t="measured"></h2>
         <p class="figure" id="measured"></p>
         <p class="detail" id="measured-detail"></p>
-        <p class="detail" id="average"></p>
       </section>
-      <section class="part part-estimated" aria-labelledby="estimated-title">
-        <h2 id="estimated-title">Part estimée</h2>
+      <section class="entry entry-estimated" aria-labelledby="estimated-title">
+        <h2 id="estimated-title" data-t="estimated"></h2>
         <p class="figure" id="estimated"></p>
         <p class="detail" id="estimated-detail"></p>
-        <p class="detail" id="broken"></p>
-        <p class="detail" id="broken-average"></p>
       </section>
     </div>
 
     <div class="field">
-      <label for="games">Parties sans replay</label>
+      <div class="field-text">
+        <label for="games" data-t="gamesLabel"></label>
+        <p class="hint" id="games-hint" data-t="gamesHint"></p>
+      </div>
       <div class="stepper">
-        <button type="button" id="less" aria-label="Retirer une partie">
+        <button type="button" id="less" data-t-label="less">
           <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8h10"/></svg>
         </button>
-        <input id="games" type="number" inputmode="numeric" min="0" max="100000" step="1" value="0" autocomplete="off">
-        <button type="button" id="more" aria-label="Ajouter une partie">
+        <input id="games" type="number" inputmode="numeric" min="0" max="100000" step="1" value="0" autocomplete="off" aria-describedby="games-hint">
+        <button type="button" id="more" data-t-label="more">
           <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8h10M8 3v10"/></svg>
         </button>
       </div>
     </div>
 
-    <p class="status" id="status" role="status">Chargement.</p>
+    <footer class="foot">
+      <p class="status" id="status" role="status"></p>
+      <div class="update" id="update" hidden>
+        <p id="update-text"></p>
+        <button type="button" id="apply-update" data-t="restart"></button>
+      </div>
+    </footer>
   </main>
   <script src="app.js"></script>
 </body>

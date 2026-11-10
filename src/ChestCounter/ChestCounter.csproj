@@ -4,6 +4,10 @@
     <TargetFramework>net10.0-windows</TargetFramework>
     <UseWindowsForms>true</UseWindowsForms>
     <Version>1.4.0</Version>
+    <ApplicationIcon>app.ico</ApplicationIcon>
+    <Product>Chest Counter</Product>
+    <Company>Palawi</Company>
+    <Copyright>Copyright (c) 2026 Palawi</Copyright>
     <RuntimeIdentifiers>win-x64</RuntimeIdentifiers>
     <!-- WebView2 ships a WPF assembly this app never loads; its WindowsBase reference is harmless. -->
     <NoWarn>$(NoWarn);MSB3277</NoWarn>
@@ -14,5 +18,6 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.4314.35" />
     <Content Include="wwwroot/**" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="app.ico" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>
