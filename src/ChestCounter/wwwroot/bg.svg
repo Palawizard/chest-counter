@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 460 560" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <filter id="veins" x="-10%" y="-10%" width="120%" height="120%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.012 0.02" numOctaves="3" seed="11" result="noise"/>
+      <feDisplacementMap in="SourceGraphic" in2="noise" scale="70" xChannelSelector="R" yChannelSelector="G"/>
+      <feGaussianBlur stdDeviation="0.5"/>
+    </filter>
+    <filter id="soft"><feGaussianBlur stdDeviation="1.4"/></filter>
+    <filter id="bokeh"><feGaussianBlur stdDeviation="2.2"/></filter>
+  </defs>
+  <g fill="none" stroke="#8a5a1c" stroke-linecap="round" filter="url(#veins)" opacity=".16">
+    <path d="M-40 120 L 520 -60" stroke-width="1.4"/>
+    <path d="M-40 230 L 520 60" stroke-width="0.8"/>
+    <path d="M-40 360 L 520 150" stroke-width="1.6"/>
+    <path d="M-40 430 L 520 300" stroke-width="0.7"/>
+    <path d="M-40 600 L 520 360" stroke-width="1.2"/>
+    <path d="M60 620 L 520 470" stroke-width="0.9"/>
+  </g>
+  <g fill="none" stroke="#ffd56a" stroke-linecap="round" filter="url(#soft)" opacity=".55">
+    <path d="M-20 470 C 90 430 200 520 300 470 S 430 400 490 430" stroke-width="1.2"/>
+    <path d="M-20 485 C 100 445 210 535 310 485 S 440 415 490 445" stroke-width="0.9"/>
+    <path d="M-20 500 C 110 460 220 548 320 500 S 450 430 490 460" stroke-width="1.4"/>
+    <path d="M-20 515 C 120 475 230 560 330 515 S 455 448 490 478" stroke-width="0.8"/>
+    <path d="M300 -10 C 340 40 400 30 480 70" stroke-width="1.1"/>
+    <path d="M320 -10 C 360 48 410 44 480 88" stroke-width="0.8"/>
+  </g>
+  <g fill="#ffe7a0" filter="url(#bokeh)" opacity=".4">
+    <circle cx="420" cy="40" r="6"/><circle cx="440" cy="92" r="3"/><circle cx="396" cy="18" r="2.5"/>
+    <circle cx="36" cy="506" r="7"/><circle cx="78" cy="540" r="3.5"/><circle cx="410" cy="520" r="4"/>
+  </g>
+</svg>

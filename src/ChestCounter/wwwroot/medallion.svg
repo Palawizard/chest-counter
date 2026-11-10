@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240">
+  <defs>
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#fff1b8"/><stop offset=".42" stop-color="#f5c94a"/><stop offset=".78" stop-color="#d4921e"/><stop offset="1" stop-color="#a0620e"/>
+    </linearGradient>
+    <linearGradient id="starLight" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#fff4c4"/><stop offset="1" stop-color="#f0bd45"/>
+    </linearGradient>
+    <linearGradient id="starDark" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#e3a634"/><stop offset="1" stop-color="#9c5d0d"/>
+    </linearGradient>
+    <radialGradient id="bronze" cx=".5" cy=".42" r=".6">
+      <stop offset="0" stop-color="#8c5719"/><stop offset="1" stop-color="#4a2a0b"/>
+    </radialGradient>
+    <radialGradient id="gem" cx=".4" cy=".34" r=".72">
+      <stop offset="0" stop-color="#fff4a6"/><stop offset=".32" stop-color="#ffd43c"/><stop offset=".7" stop-color="#ffab14"/><stop offset="1" stop-color="#e57a00"/>
+    </radialGradient>
+  </defs>
+  <circle cx="120" cy="120" r="84" fill="url(#bronze)"/>
+  <circle cx="120" cy="120" r="84" fill="none" stroke="#ffe08a" stroke-opacity=".7" stroke-width="2"/>
+  <circle cx="120" cy="120" r="100" fill="none" stroke="url(#gold)" stroke-width="16" stroke-dasharray="176 14 214 14 112 12 22 12 18 34" transform="rotate(-128 120 120)"/>
+  <circle cx="120" cy="120" r="91.5" fill="none" stroke="#8a520f" stroke-opacity=".55" stroke-width="1.5" stroke-dasharray="176 14 214 14 112 12 22 12 18 34" transform="rotate(-128 120 120)"/>
+  <polygon points="120.00,120.00 120.00,4.00 103.03,103.03" fill="url(#starLight)"/>
+  <polygon points="120.00,120.00 120.00,4.00 136.97,103.03" fill="url(#starDark)"/>
+  <polygon points="120.00,120.00 180.81,59.19 120.00,100.80" fill="url(#starLight)"/>
+  <polygon points="120.00,120.00 180.81,59.19 139.20,120.00" fill="url(#starDark)"/>
+  <polygon points="120.00,120.00 236.00,120.00 136.97,103.03" fill="url(#starLight)"/>
+  <polygon points="120.00,120.00 236.00,120.00 136.97,136.97" fill="url(#starDark)"/>
+  <polygon points="120.00,120.00 180.81,180.81 139.20,120.00" fill="url(#starLight)"/>
+  <polygon points="120.00,120.00 180.81,180.81 120.00,139.20" fill="url(#starDark)"/>
+  <polygon points="120.00,120.00 120.00,236.00 136.97,136.97" fill="url(#starLight)"/>
+  <polygon points="120.00,120.00 120.00,236.00 103.03,136.97" fill="url(#starDark)"/>
+  <polygon points="120.00,120.00 59.19,180.81 120.00,139.20" fill="url(#starLight)"/>
+  <polygon points="120.00,120.00 59.19,180.81 100.80,120.00" fill="url(#starDark)"/>
+  <polygon points="120.00,120.00 4.00,120.00 103.03,136.97" fill="url(#starLight)"/>
+  <polygon points="120.00,120.00 4.00,120.00 103.03,103.03" fill="url(#starDark)"/>
+  <polygon points="120.00,120.00 59.19,59.19 100.80,120.00" fill="url(#starLight)"/>
+  <polygon points="120.00,120.00 59.19,59.19 120.00,100.80" fill="url(#starDark)"/>
+  <circle cx="120" cy="120" r="66" fill="#7a4710"/>
+  <circle cx="120" cy="120" r="62" fill="url(#gem)"/>
+  <polygon points="133.47,86.66 153.10,105.95 153.34,133.47 134.05,153.10 106.53,153.34 86.90,134.05 86.66,106.53 105.95,86.90" fill="#ffe680" fill-opacity=".55"/>
+  <polygon points="105.95,86.90 120.00,59.86 133.47,86.66" fill="#ffc53a" fill-opacity=".55"/>
+  <polygon points="120.00,59.86 133.47,86.66 162.53,77.47" fill="#e98400" fill-opacity=".45"/>
+  <polygon points="133.47,86.66 162.53,77.47 153.10,105.95" fill="#ffc53a" fill-opacity=".55"/>
+  <polygon points="162.53,77.47 153.10,105.95 180.14,120.00" fill="#e98400" fill-opacity=".45"/>
+  <polygon points="153.10,105.95 180.14,120.00 153.34,133.47" fill="#ffc53a" fill-opacity=".55"/>
+  <polygon points="180.14,120.00 153.34,133.47 162.53,162.53" fill="#e98400" fill-opacity=".45"/>
+  <polygon points="153.34,133.47 162.53,162.53 134.05,153.10" fill="#ffc53a" fill-opacity=".55"/>
+  <polygon points="162.53,162.53 134.05,153.10 120.00,180.14" fill="#e98400" fill-opacity=".45"/>
+  <polygon points="134.05,153.10 120.00,180.14 106.53,153.34" fill="#ffc53a" fill-opacity=".55"/>
+  <polygon points="120.00,180.14 106.53,153.34 77.47,162.53" fill="#e98400" fill-opacity=".45"/>
+  <polygon points="106.53,153.34 77.47,162.53 86.90,134.05" fill="#ffc53a" fill-opacity=".55"/>
+  <polygon points="77.47,162.53 86.90,134.05 59.86,120.00" fill="#e98400" fill-opacity=".45"/>
+  <polygon points="86.90,134.05 59.86,120.00 86.66,106.53" fill="#ffc53a" fill-opacity=".55"/>
+  <polygon points="59.86,120.00 86.66,106.53 77.47,77.47" fill="#e98400" fill-opacity=".45"/>
+  <polygon points="86.66,106.53 77.47,77.47 105.95,86.90" fill="#ffc53a" fill-opacity=".55"/>
+  <polygon points="77.47,77.47 105.95,86.90 120.00,59.86" fill="#e98400" fill-opacity=".45"/>
+  <polygon points="133.47,86.66 153.10,105.95 153.34,133.47 134.05,153.10 106.53,153.34 86.90,134.05 86.66,106.53 105.95,86.90" fill="none" stroke="#fff3b0" stroke-opacity=".6" stroke-width="1.2" stroke-linejoin="round"/>
+  <circle cx="120" cy="120" r="62" fill="none" stroke="#fff0a0" stroke-width="2.5"/>
+  <ellipse cx="89.0" cy="85.9" rx="16.12" ry="7.4399999999999995" fill="#ffffff" fill-opacity=".55" transform="rotate(-32 89.0 85.9)"/>
+  
+</svg>

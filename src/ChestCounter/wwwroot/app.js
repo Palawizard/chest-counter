@@ -27,7 +27,7 @@ const STRINGS = {
     },
     scanning: "Analyse des replays en cours.",
     inProgress: "La partie en cours sera comptée à la fin.",
-    failed: (n) => `Replays illisibles : ${n}.`,
+    failed: (n) => `Replays illisibles\u00a0: ${n}.`,
     errorRead: "La lecture du dossier a échoué. Nouvel essai dans 30 secondes.",
     errorSave: "L'enregistrement a échoué. Réessaie dans un instant.",
     errorInput: (max) => `Entre un nombre entre 0 et ${max}.`,
@@ -67,13 +67,16 @@ const requested = new URLSearchParams(location.search).get("lang") ?? navigator.
 const lang = requested.toLowerCase().startsWith("fr") ? "fr" : "en";
 const t = STRINGS[lang];
 const locale = lang === "fr" ? "fr-FR" : "en-US";
-const whole = new Intl.NumberFormat(locale, { maximumFractionDigits: 0 });
+const grouped = new Intl.NumberFormat(locale, { maximumFractionDigits: 0 });
+// French groups digits with a narrow no-break space, which the figure face does not draw.
+const whole = { format: (value) => grouped.format(value).replace(/\u202f/g, "\u00a0") };
 const oneDecimal = new Intl.NumberFormat(locale, { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 const stampTime = new Intl.DateTimeFormat(locale, { day: "numeric", month: "short", hour: "numeric", minute: "2-digit" });
 
 const element = (id) => document.getElementById(id);
 const games = element("games");
 const stamp = element("stamp");
+const medal = document.querySelector(".medal");
 const webview = window.chrome.webview;
 const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)");
 
@@ -90,12 +93,16 @@ function applyStaticText() {
   element("status").textContent = t.loading;
 }
 
-function pressStamp() {
-  const settled = "rotate(-5deg)";
+// The compass swings once and settles, like a needle finding north.
+function swingMedallion() {
   const keyframes = reducedMotion.matches
-    ? [{ opacity: 0 }, { opacity: 1 }]
-    : [{ opacity: 0, transform: "rotate(-5deg) scale(1.12)" }, { opacity: 1, transform: `${settled} scale(1)` }];
-  stamp.animate(keyframes, { duration: 220, easing: "cubic-bezier(0.23, 1, 0.32, 1)" });
+    ? [{ opacity: 0.55 }, { opacity: 1 }]
+    : [
+        { transform: "rotate(0deg)", easing: "cubic-bezier(0.33, 1, 0.68, 1)" },
+        { transform: "rotate(-18deg)", offset: 0.35, easing: "cubic-bezier(0.23, 1, 0.32, 1)" },
+        { transform: "rotate(0deg)" },
+      ];
+  medal.animate(keyframes, { duration: 300, easing: "linear" });
 }
 
 function statusFor(state) {
@@ -122,7 +129,7 @@ function paintStatus(state) {
   status.dataset.tone = inputError || state.error ? "error" : "normal";
 }
 
-// The stamp is judged on completed scans only: the watcher rescans the folder often,
+// Judged on completed scans only: the watcher rescans the folder often,
 // and the window must stay still unless exactly one isolated match was added.
 function paintStamp(state) {
   if (state.scanning) {
@@ -139,11 +146,8 @@ function paintStamp(state) {
   }
   lastCompleted = state;
   stamp.hidden = Boolean(state.error);
-  if (!stamp.hidden) {
-    stamp.parentElement.style.setProperty("--stamp-w", `${Math.ceil(stamp.getBoundingClientRect().width) + 16}px`);
-  }
   if (isolated && !stamp.hidden) {
-    pressStamp();
+    swingMedallion();
   }
 }
 

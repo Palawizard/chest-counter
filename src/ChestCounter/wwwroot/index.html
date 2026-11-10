@@ -8,18 +8,16 @@
   <link rel="stylesheet" href="app.css">
 </head>
 <body>
-  <header class="cover">
-    <img class="mark" src="icon.svg" alt="" width="28" height="28">
-    <span class="name" data-t="appName"></span>
-  </header>
-
+  <header class="top"><img class="mark" src="icon.svg" alt="" width="26" height="26"><span class="name" data-t="appName"></span></header>
   <main class="page">
     <section class="balance" aria-labelledby="total-label">
-      <h1 id="total-label"><span data-t="total"></span> <span class="unit" data-t="inChests"></span></h1>
-      <p class="total" id="total">0</p>
-      <p class="stamp" id="stamp" hidden><span data-t="upToDate"></span><span id="stamp-time"></span></p>
+      <img class="medal" src="medallion.svg" alt="">
+      <div class="balance-text">
+        <h1 id="total-label"><span data-t="total"></span> <span class="unit" data-t="inChests"></span></h1>
+        <p class="total" id="total">0</p>
+        <p class="stamp" id="stamp" hidden><span data-t="upToDate"></span><span id="stamp-time"></span></p>
+      </div>
     </section>
-
     <div class="entries">
       <section class="entry entry-measured" aria-labelledby="measured-title">
         <h2 id="measured-title" data-t="measured"></h2>
@@ -32,20 +30,15 @@
         <p class="detail" id="estimated-detail"></p>
       </section>
     </div>
-
     <div class="field">
       <div class="field-text">
         <label for="games" data-t="gamesLabel"></label>
         <p class="hint" id="games-hint" data-t="gamesHint"></p>
       </div>
       <div class="stepper">
-        <button type="button" id="less" data-t-label="less">
-          <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8h10"/></svg>
-        </button>
+        <button type="button" id="less" data-t-label="less"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8h10"/></svg></button>
         <input id="games" type="number" inputmode="numeric" min="0" max="100000" step="1" value="0" autocomplete="off" aria-describedby="games-hint">
-        <button type="button" id="more" data-t-label="more">
-          <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8h10M8 3v10"/></svg>
-        </button>
+        <button type="button" id="more" data-t-label="more"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8h10M8 3v10"/></svg></button>
       </div>
     </div>
 

@@ -10,8 +10,8 @@ internal sealed class MainForm : Form
     private const string Host = "chest-counter.example";
     private const string Origin = $"https://{Host}/";
     private const int MaxGamesWithoutReplay = 100000;
-    private static readonly Color DarkPage = Color.FromArgb(21, 68, 51);
-    private static readonly Color LightPage = Color.FromArgb(241, 246, 242);
+    private static readonly Color DarkPage = Color.FromArgb(36, 22, 10);
+    private static readonly Color LightPage = Color.FromArgb(242, 212, 148);
 
     private readonly ChestTracker _tracker;
     private readonly string _demos;
