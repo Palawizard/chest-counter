@@ -23,8 +23,6 @@
   --press: rgb(185 122 20 / 0.14);
   --total: #3b2410;
   --alert: #a3260f;
-  --band: #4a2a0b;
-  --band-ink: #fbe7b8;
   --ui: "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
   --figures: "Lilita One", "Segoe UI", sans-serif;
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
@@ -49,8 +47,6 @@
     --press: rgb(242 193 78 / 0.14);
     --total: #ffd55c;
     --alert: #ffab8a;
-    --band: #160c04;
-    --band-ink: #f6dca0;
   }
 }
 
