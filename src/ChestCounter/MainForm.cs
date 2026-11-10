@@ -45,13 +45,20 @@ internal sealed class MainForm : Form
         base.OnShown(e);
         try
         {
-            var environment = await CoreWebView2Environment.CreateAsync(userDataFolder: _webDataFolder, options: new CoreWebView2EnvironmentOptions { Language = ChestCounter.Text.Language });
+            // No environment options: every process sharing this data folder, 1.x included,
+            // must create WebView2 with identical options or the second one fails.
+            var environment = await CoreWebView2Environment.CreateAsync(userDataFolder: _webDataFolder);
             await _view.EnsureCoreWebView2Async(environment);
         }
-        catch (Exception exception) when (exception is WebView2RuntimeNotFoundException or COMException or InvalidOperationException or IOException)
+        catch (WebView2RuntimeNotFoundException)
         {
-            MessageBox.Show(ChestCounter.Text.Pick("L'affichage n'a pas pu démarrer. Installe le composant Microsoft Edge WebView2, puis relance l'application.", "The window could not start. Install Microsoft Edge WebView2, then open the app again."), Text, MessageBoxButtons.OK, MessageBoxIcon.Error);
-            Close();
+            ShowStartupError(ChestCounter.Text.Pick("L'affichage n'a pas pu démarrer. Installe le composant Microsoft Edge WebView2, puis relance l'application.", "The window could not start. Install Microsoft Edge WebView2, then open the app again."));
+            return;
+        }
+        catch (Exception exception) when (exception is COMException or InvalidOperationException or IOException or UnauthorizedAccessException)
+        {
+            LogStartupError(exception);
+            ShowStartupError(ChestCounter.Text.Pick("L'affichage n'a pas pu démarrer. Ferme les autres fenêtres de Chest Counter, puis relance l'application.", "The window could not start. Close any other Chest Counter window, then open the app again."));
             return;
         }
 
@@ -66,6 +73,25 @@ internal sealed class MainForm : Form
         core.NewWindowRequested += (_, args) => args.Handled = true;
         core.WebMessageReceived += OnPageMessage;
         core.Navigate(Origin + "index.html?lang=" + ChestCounter.Text.Language);
+    }
+
+    private void ShowStartupError(string message)
+    {
+        MessageBox.Show(message, Text, MessageBoxButtons.OK, MessageBoxIcon.Error);
+        Close();
+    }
+
+    private void LogStartupError(Exception exception)
+    {
+        try
+        {
+            var log = Path.Combine(Path.GetDirectoryName(_webDataFolder)!, "display.errors.log");
+            File.AppendAllText(log, $"{DateTime.Now:s} {exception.GetType().Name} 0x{exception.HResult:X8} {exception.Message}{Environment.NewLine}");
+        }
+        catch (Exception logFailure) when (logFailure is IOException or UnauthorizedAccessException)
+        {
+            // The message box still tells the player what to do.
+        }
     }
 
     protected override void OnFormClosed(FormClosedEventArgs e)
