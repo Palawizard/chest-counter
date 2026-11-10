@@ -1,3 +1,5 @@
+using Velopack;
+
 namespace ChestCounter;
 
 internal static class Program
@@ -5,6 +7,8 @@ internal static class Program
     [STAThread]
     private static int Main(string[] args)
     {
+        VelopackApp.Build().Run();
+
         var localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
         var demos = args.Length > 0 ? args[0] : Path.Combine(localAppData, "FortniteGame", "Saved", "Demos");
         var stateFile = args.Length > 1 ? args[1] : Path.Combine(localAppData, "ChestCounter", "state.json");

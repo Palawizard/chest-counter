@@ -17,6 +17,7 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.4314.35" />
+    <PackageReference Include="Velopack" Version="1.2.161" />
     <Content Include="wwwroot/**" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="app.ico" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>

@@ -17,6 +17,7 @@ internal sealed class MainForm : Form
     private readonly string _demos;
     private readonly string _webDataFolder;
     private readonly WebView2 _view = new() { Dock = DockStyle.Fill };
+    private readonly AppUpdater _updater = new();
     private ReplayFolderWatcher? _watcher;
     private volatile bool _scanning;
     private string? _error;
@@ -92,7 +93,16 @@ internal sealed class MainForm : Form
             switch (message.RootElement.GetProperty("type").GetString())
             {
                 case "ready":
-                    _watcher ??= new ReplayFolderWatcher(_demos, Scan, ShowError, TimeSpan.FromSeconds(2), TimeSpan.FromSeconds(30));
+                    if (_watcher is null)
+                    {
+                        _watcher = new ReplayFolderWatcher(_demos, Scan, ShowError, TimeSpan.FromSeconds(2), TimeSpan.FromSeconds(30));
+                        _ = PrepareUpdateAsync();
+                    }
+
+                    break;
+                case "applyUpdate":
+                    _watcher?.Dispose();
+                    _updater.ApplyAndRestart();
                     break;
                 case "setGamesWithoutReplay" when message.RootElement.GetProperty("value").TryGetInt32(out var games) && games is >= 0 and <= MaxGamesWithoutReplay:
                     _tracker.SetGamesWithoutReplay(games);
@@ -105,6 +115,14 @@ internal sealed class MainForm : Form
         }
 
         PostState();
+    }
+
+    private async Task PrepareUpdateAsync()
+    {
+        if (await _updater.PrepareAsync())
+        {
+            PostState();
+        }
     }
 
     private void Scan(CancellationToken cancellation)
@@ -153,6 +171,7 @@ internal sealed class MainForm : Form
             failed = summary.Failed,
             scanning = _scanning,
             error = _error,
+            update = _updater.ReadyVersion,
         }));
     }
 }
