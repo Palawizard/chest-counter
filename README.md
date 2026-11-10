@@ -66,7 +66,7 @@ Open Chest Counter and leave it open or minimized while you play. A match is cou
 
 The big number is the estimated total. The line under it, Read from replays, counts the chests opened in matches that have a replay; compare this one with the in-game counter. The next line, Estimated, adds the chests from matches without a replay and the chests you broke without opening them.
 
-If you played matches before installing Chest Counter, or Fortnite already deleted their replays, enter how many in **Matches without a replay**. They are estimated from your current average.
+If you played matches before installing Chest Counter, or Fortnite already deleted their replays, enter how many in **Matches without a replay**. Those are almost always your oldest matches, played before you got better at finding chests, so they are estimated from your first 20 counted matches.
 
 ## What is counted
 
