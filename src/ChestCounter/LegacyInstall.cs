@@ -1,4 +1,3 @@
-using System.ComponentModel;
 using System.Diagnostics;
 using Microsoft.Win32;
 
@@ -13,26 +12,21 @@ internal static class LegacyInstall
     // Velopack gives install and update hooks 30 seconds before it gives up on them.
     private static readonly TimeSpan Timeout = TimeSpan.FromSeconds(20);
 
+    // Never throws: a failed cleanup must not fail the install or update that called it.
     public static void Remove()
     {
-        using var key = Registry.CurrentUser.OpenSubKey(UninstallKey);
-        if (key?.GetValue("UninstallString") is not string command)
-        {
-            return;
-        }
-
-        var uninstaller = command.Trim('"');
-        if (!File.Exists(uninstaller))
-        {
-            return;
-        }
-
         try
         {
-            using var process = Process.Start(new ProcessStartInfo(uninstaller, "/VERYSILENT /SUPPRESSMSGBOXES /NORESTART") { UseShellExecute = false });
+            using var key = Registry.CurrentUser.OpenSubKey(UninstallKey);
+            if (key?.GetValue("UninstallString") is not string command || !File.Exists(command.Trim('"')))
+            {
+                return;
+            }
+
+            using var process = Process.Start(new ProcessStartInfo(command.Trim('"'), "/VERYSILENT /SUPPRESSMSGBOXES /NORESTART") { UseShellExecute = false });
             process?.WaitForExit(Timeout);
         }
-        catch (Win32Exception)
+        catch (Exception)
         {
             // The old version stays installed; the user can still remove it from Windows settings.
         }
