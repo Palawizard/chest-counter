@@ -10,7 +10,8 @@ internal static class LegacyInstall
     private const string UninstallKey = @"Software\Microsoft\Windows\CurrentVersion\Uninstall\{7C1E2B64-3D0F-4A59-9E21-6B8F4D2A1C37}_is1";
 
     // Velopack gives install and update hooks 30 seconds before it gives up on them.
-    private static readonly TimeSpan Timeout = TimeSpan.FromSeconds(20);
+    private static readonly TimeSpan CloseTimeout = TimeSpan.FromSeconds(4);
+    private static readonly TimeSpan UninstallTimeout = TimeSpan.FromSeconds(20);
 
     // Never throws: a failed cleanup must not fail the install or update that called it.
     public static void Remove()
@@ -23,12 +24,43 @@ internal static class LegacyInstall
                 return;
             }
 
-            using var process = Process.Start(new ProcessStartInfo(command.Trim('"'), "/VERYSILENT /SUPPRESSMSGBOXES /NORESTART") { UseShellExecute = false });
-            process?.WaitForExit(Timeout);
+            var uninstaller = command.Trim('"');
+            CloseRunning(Path.GetDirectoryName(uninstaller)!);
+            using var process = Process.Start(new ProcessStartInfo(uninstaller, "/VERYSILENT /SUPPRESSMSGBOXES /NORESTART") { UseShellExecute = false });
+            process?.WaitForExit(UninstallTimeout);
         }
         catch (Exception)
         {
             // The old version stays installed; the user can still remove it from Windows settings.
+        }
+    }
+
+    // A running 1.x locks its files, so its uninstaller would leave it behind. It saves after
+    // every change, so stopping it loses nothing.
+    private static void CloseRunning(string installFolder)
+    {
+        foreach (var process in Process.GetProcessesByName("ChestCounter"))
+        {
+            using (process)
+            {
+                try
+                {
+                    if (process.MainModule?.FileName.StartsWith(installFolder, StringComparison.OrdinalIgnoreCase) != true)
+                    {
+                        continue;
+                    }
+
+                    process.CloseMainWindow();
+                    if (!process.WaitForExit(CloseTimeout))
+                    {
+                        process.Kill();
+                    }
+                }
+                catch (Exception exception) when (exception is InvalidOperationException or System.ComponentModel.Win32Exception)
+                {
+                    // Already gone, or not ours to inspect.
+                }
+            }
         }
     }
 }
