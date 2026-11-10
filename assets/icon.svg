@@ -1,9 +1,44 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
-  <rect width="256" height="256" rx="56" fill="#f1f6f2"/>
-  <g transform="rotate(-8 128 128)">
-    <rect x="30" y="30" width="196" height="196" rx="34" fill="none" stroke="#653eae" stroke-width="14"/>
-    <path d="M70 120 V106 C70 88 94 79 128 79 C162 79 186 88 186 106 V120 Z" fill="#653eae"/>
-    <path d="M70 130 H186 V174 a12 12 0 0 1 -12 12 H82 a12 12 0 0 1 -12 -12 Z" fill="#653eae"/>
-    <rect x="116" y="112" width="24" height="32" rx="6" fill="#f1f6f2"/>
-  </g>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240">
+  <defs>
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#fff1b8"/><stop offset=".42" stop-color="#f5c94a"/><stop offset=".78" stop-color="#d4921e"/><stop offset="1" stop-color="#a0620e"/>
+    </linearGradient>
+    <linearGradient id="starLight" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#fff4c4"/><stop offset="1" stop-color="#f0bd45"/>
+    </linearGradient>
+    <linearGradient id="starDark" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#e3a634"/><stop offset="1" stop-color="#9c5d0d"/>
+    </linearGradient>
+    <radialGradient id="bronze" cx=".5" cy=".42" r=".6">
+      <stop offset="0" stop-color="#8c5719"/><stop offset="1" stop-color="#4a2a0b"/>
+    </radialGradient>
+    <radialGradient id="gem" cx=".4" cy=".34" r=".72">
+      <stop offset="0" stop-color="#fff4a6"/><stop offset=".32" stop-color="#ffd43c"/><stop offset=".7" stop-color="#ffab14"/><stop offset="1" stop-color="#e57a00"/>
+    </radialGradient>
+  </defs>
+  <circle cx="120" cy="120" r="112" fill="url(#gold)"/>
+  <circle cx="120" cy="120" r="112" fill="none" stroke="#8a520f" stroke-width="3"/>
+  <circle cx="120" cy="120" r="100" fill="#7a4710"/>
+  <circle cx="120" cy="120" r="96" fill="url(#gem)"/>
+  <polygon points="140.86,68.37 171.25,98.24 171.63,140.86 141.76,171.25 99.14,171.63 68.75,141.76 68.37,99.14 98.24,68.75" fill="#ffe680" fill-opacity=".55"/>
+  <polygon points="98.24,68.75 120.00,26.88 140.86,68.37" fill="#ffc53a" fill-opacity=".55"/>
+  <polygon points="120.00,26.88 140.86,68.37 185.85,54.15" fill="#e98400" fill-opacity=".45"/>
+  <polygon points="140.86,68.37 185.85,54.15 171.25,98.24" fill="#ffc53a" fill-opacity=".55"/>
+  <polygon points="185.85,54.15 171.25,98.24 213.12,120.00" fill="#e98400" fill-opacity=".45"/>
+  <polygon points="171.25,98.24 213.12,120.00 171.63,140.86" fill="#ffc53a" fill-opacity=".55"/>
+  <polygon points="213.12,120.00 171.63,140.86 185.85,185.85" fill="#e98400" fill-opacity=".45"/>
+  <polygon points="171.63,140.86 185.85,185.85 141.76,171.25" fill="#ffc53a" fill-opacity=".55"/>
+  <polygon points="185.85,185.85 141.76,171.25 120.00,213.12" fill="#e98400" fill-opacity=".45"/>
+  <polygon points="141.76,171.25 120.00,213.12 99.14,171.63" fill="#ffc53a" fill-opacity=".55"/>
+  <polygon points="120.00,213.12 99.14,171.63 54.15,185.85" fill="#e98400" fill-opacity=".45"/>
+  <polygon points="99.14,171.63 54.15,185.85 68.75,141.76" fill="#ffc53a" fill-opacity=".55"/>
+  <polygon points="54.15,185.85 68.75,141.76 26.88,120.00" fill="#e98400" fill-opacity=".45"/>
+  <polygon points="68.75,141.76 26.88,120.00 68.37,99.14" fill="#ffc53a" fill-opacity=".55"/>
+  <polygon points="26.88,120.00 68.37,99.14 54.15,54.15" fill="#e98400" fill-opacity=".45"/>
+  <polygon points="68.37,99.14 54.15,54.15 98.24,68.75" fill="#ffc53a" fill-opacity=".55"/>
+  <polygon points="54.15,54.15 98.24,68.75 120.00,26.88" fill="#e98400" fill-opacity=".45"/>
+  <polygon points="140.86,68.37 171.25,98.24 171.63,140.86 141.76,171.25 99.14,171.63 68.75,141.76 68.37,99.14 98.24,68.75" fill="none" stroke="#fff3b0" stroke-opacity=".6" stroke-width="1.2" stroke-linejoin="round"/>
+  <circle cx="120" cy="120" r="96" fill="none" stroke="#fff0a0" stroke-width="2.5"/>
+  <ellipse cx="72.0" cy="67.19999999999999" rx="24.96" ry="11.52" fill="#ffffff" fill-opacity=".55" transform="rotate(-32 72.0 67.19999999999999)"/>
+  <g fill="#fffaf0"><path d="M68.8 112.2 V104.5 A24.8 24.8 0 0 1 93.6 79.7 H146.3 A24.8 24.8 0 0 1 171.1 104.5 V112.2 Z"/><rect x="68.8" y="121.6" width="102.3" height="38.8" rx="7.8"/></g><rect x="109.2" y="103.0" width="21.7" height="27.9" rx="4.7" fill="#d97a00"/>
 </svg>
