@@ -21,7 +21,10 @@ const STRINGS = {
     restart: "Redémarrer",
     noGames: "Aucune partie lue pour l'instant.",
     measuredDetail: (games, average) => `Sur ${games} ${frPlural(games, "partie")}, ${average} en moyenne.`,
-    estimatedDetail: (missed, games, broken) => `${missed} pour ${games} ${frPlural(games, "partie")} sans replay, ${broken} ${frPlural(broken, "cassé")} sans être ${frPlural(broken, "ouvert")}.`,
+    estimatedDetail: (missed, games, broken, basis) => {
+      const pace = basis === null ? "" : basis === "1" ? ", au rythme de ta première partie" : `, au rythme de tes ${basis} premières parties`;
+      return `${missed} pour ${games} ${frPlural(games, "partie")} sans replay${pace}. ${broken} ${frPlural(broken, "cassé")} sans être ${frPlural(broken, "ouvert")}.`;
+    },
     scanning: "Analyse des replays en cours.",
     inProgress: "La partie en cours sera comptée à la fin.",
     failed: (n) => `Replays illisibles : ${n}.`,
@@ -45,7 +48,10 @@ const STRINGS = {
     restart: "Restart",
     noGames: "No match read yet.",
     measuredDetail: (games, average) => `Over ${games} ${games === "1" ? "match" : "matches"}, ${average} on average.`,
-    estimatedDetail: (missed, games, broken) => `${missed} for ${games} ${games === "1" ? "match" : "matches"} without a replay, ${broken} broken unopened.`,
+    estimatedDetail: (missed, games, broken, basis) => {
+      const pace = basis === null ? "" : basis === "1" ? ", at the pace of your first match" : `, at the pace of your first ${basis} matches`;
+      return `${missed} for ${games} ${games === "1" ? "match" : "matches"} without a replay${pace}. ${broken} broken unopened.`;
+    },
     scanning: "Reading replays.",
     inProgress: "The match in progress will be counted when it ends.",
     failed: (n) => `Unreadable replays: ${n}.`,
@@ -158,7 +164,8 @@ function render(state) {
   element("estimated-detail").textContent = unread ? "" : t.estimatedDetail(
     whole.format(Math.round(state.estimated)),
     whole.format(state.gamesWithoutReplay),
-    whole.format(Math.round(state.broken)));
+    whole.format(Math.round(state.broken)),
+    state.gamesWithoutReplay > 0 && state.basisGames > 0 ? whole.format(state.basisGames) : null);
 
   paintStamp(state);
   paintStatus(state);

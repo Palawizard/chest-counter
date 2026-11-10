@@ -166,6 +166,7 @@ internal sealed class MainForm : Form
             estimated = summary.EstimatedChests,
             broken = summary.EstimatedBroken,
             brokenPerGame = summary.BrokenPerGame,
+            basisGames = summary.BasisGames,
             total = summary.Total,
             inProgress = summary.InProgress,
             failed = summary.Failed,

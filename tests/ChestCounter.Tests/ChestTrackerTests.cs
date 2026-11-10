@@ -132,13 +132,13 @@ public sealed class ChestTrackerTests : IDisposable
     }
 
     [Theory]
-    [InlineData(4, 100, 2, 25.0, 50.0, 150.0)]
-    [InlineData(4, 15, 6, 3.75, 23.0, 38.0)]
-    [InlineData(4, 100, 0, 25.0, 0.0, 100.0)]
-    [InlineData(0, 0, 10, 0.0, 0.0, 0.0)]
-    public void Estimate_extrapolates_the_average_to_games_without_replay(int analyzed, int chests, int withoutReplay, double average, double estimated, double total)
+    [InlineData(4, 100, 2, 20.0, 25.0, 40.0, 140.0)]
+    [InlineData(4, 15, 6, 3.75, 3.75, 23.0, 38.0)]
+    [InlineData(4, 100, 0, 25.0, 25.0, 0.0, 100.0)]
+    [InlineData(0, 0, 10, 0.0, 0.0, 0.0, 0.0)]
+    public void Estimate_applies_the_per_missing_game_rate_to_games_without_replay(int analyzed, int chests, int withoutReplay, double perMissingGame, double average, double estimated, double total)
     {
-        var summary = new Summary(analyzed, chests, 0, 0, withoutReplay);
+        var summary = new Summary(analyzed, chests, 0, 0, withoutReplay, PerMissingGame: perMissingGame);
 
         Assert.Equal(average, summary.Average);
         Assert.Equal(estimated, summary.EstimatedChests);
@@ -161,6 +161,41 @@ public sealed class ChestTrackerTests : IDisposable
         Assert.Equal(20, tracker.Current.Average);
         Assert.Equal(180, tracker.Current.EstimatedChests);
         Assert.Equal(220, tracker.Current.Total);
+    }
+
+    [Fact]
+    public void Games_without_replay_are_estimated_from_the_earliest_matches()
+    {
+        var tracker = NewTracker();
+        tracker.SetGamesWithoutReplay(10);
+        for (var i = 0; i < 25; i++)
+        {
+            // File names run backwards so the estimate cannot rely on the scan order.
+            AddReplay($"{99 - i}.replay", $"id-{i}", i < ChestTracker.BasisSize ? 10 : 50, playedAt: InSeason.AddHours(i));
+        }
+
+        tracker.Scan(Demos);
+
+        Assert.Equal(ChestTracker.BasisSize, tracker.Current.BasisGames);
+        Assert.Equal(10, tracker.Current.PerMissingGame);
+        Assert.Equal(100, tracker.Current.EstimatedChests);
+        Assert.Equal(18, tracker.Current.Average);
+    }
+
+    [Fact]
+    public void Broken_rate_for_games_without_replay_comes_from_the_earliest_matches()
+    {
+        var tracker = NewTracker();
+        tracker.SetGamesWithoutReplay(5);
+        for (var i = 0; i <= ChestTracker.BasisSize; i++)
+        {
+            AddReplay($"{i}.replay", $"id-{i}", 10, playedAt: InSeason.AddHours(i), brokenNearby: i < ChestTracker.BasisSize ? 1 : 21);
+        }
+
+        tracker.Scan(Demos);
+
+        Assert.Equal(1, tracker.Current.BrokenPerGame);
+        Assert.Equal(20 + 21 + 5, tracker.Current.EstimatedBroken);
     }
 
     [Fact]

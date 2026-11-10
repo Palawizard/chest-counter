@@ -3,12 +3,14 @@ using System.Text.RegularExpressions;
 
 namespace ChestCounter;
 
-public sealed record Summary(int GamesAnalyzed, int Chests, int InProgress, int Failed, int GamesWithoutReplay, double BrokenInMatches = 0, double BrokenPerGame = 0)
+// Games without a replay are almost always the oldest ones, so they are estimated from the
+// player's earliest counted matches (PerMissingGame, over BasisGames) rather than the overall average.
+public sealed record Summary(int GamesAnalyzed, int Chests, int InProgress, int Failed, int GamesWithoutReplay, double BrokenInMatches = 0, double BrokenPerGame = 0, double PerMissingGame = 0, int BasisGames = 0)
 {
     public double Average => GamesAnalyzed == 0 ? 0 : (double)Chests / GamesAnalyzed;
 
     // Rounded here so the displayed measured and estimated parts add up to the displayed total.
-    public double EstimatedChests => Math.Round(Average * GamesWithoutReplay, MidpointRounding.AwayFromZero);
+    public double EstimatedChests => Math.Round(PerMissingGame * GamesWithoutReplay, MidpointRounding.AwayFromZero);
 
     public double EstimatedBroken => Math.Round(BrokenInMatches + BrokenPerGame * GamesWithoutReplay, MidpointRounding.AwayFromZero);
 
@@ -17,6 +19,8 @@ public sealed record Summary(int GamesAnalyzed, int Chests, int InProgress, int 
 
 public sealed partial class ChestTracker
 {
+    public const int BasisSize = 20;
+
     private static readonly DateTime SeasonStart = new(2026, 11, 1);
 
     private readonly object _gate = new();
@@ -47,7 +51,9 @@ public sealed partial class ChestTracker
             lock (_gate)
             {
                 var (brokenInMatches, brokenPerGame) = BrokenEstimates();
-                return new Summary(_matches.Count, _matches.Values.Sum(m => m.Chests), _inProgress, _failedThisRun.Count, _state.GamesWithoutReplay, brokenInMatches, brokenPerGame);
+                var basis = Earliest(_matches.Values);
+                var perMissingGame = basis.Count == 0 ? 0 : basis.Average(m => m.Chests);
+                return new Summary(_matches.Count, _matches.Values.Sum(m => m.Chests), _inProgress, _failedThisRun.Count, _state.GamesWithoutReplay, brokenInMatches, brokenPerGame, perMissingGame, basis.Count);
             }
         }
     }
@@ -134,8 +140,11 @@ public sealed partial class ChestTracker
         Save();
     }
 
+    private static List<MatchRecord> Earliest(IEnumerable<MatchRecord> matches) =>
+        matches.OrderBy(m => m.PlayedAt).Take(BasisSize).ToList();
+
     // A counted match whose replay is gone still has its opened chests, so it gets the measured
-    // broken-per-opened ratio. A match with no replay at all only has the per-game rate.
+    // broken-per-opened ratio. A match with no replay at all gets the rate of the earliest matches.
     private (double InMatches, double PerGame) BrokenEstimates()
     {
         var known = _matches.Values.Where(m => m.BrokenNearby is not null).ToList();
@@ -148,7 +157,8 @@ public sealed partial class ChestTracker
         var opened = known.Sum(m => m.Chests);
         var perOpened = opened == 0 ? 0 : broken / opened;
         var withoutData = _matches.Values.Where(m => m.BrokenNearby is null).Sum(m => m.Chests);
-        return (broken + perOpened * withoutData, broken / known.Count);
+        var basis = Earliest(known);
+        return (broken + perOpened * withoutData, basis.Sum(m => m.BrokenNearby!.Value) / basis.Count);
     }
 
     // Written through a temporary file so a crash cannot leave a truncated state behind.
