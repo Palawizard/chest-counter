@@ -105,6 +105,6 @@ The output is in `dist\releases`. Add `-Upload` to publish it as a draft GitHub 
 
 ## License
 
-[GPL-3.0](LICENSE). The figures use [Lilita One](https://github.com/google/fonts/tree/main/ofl/lilitaone) under the SIL Open Font License.
+[GPL-3.0](LICENSE). Replays are read with [FortniteReplayDecompressor](https://github.com/Shiqan/FortniteReplayDecompressor) (MIT). The figures use [Lilita One](https://github.com/google/fonts/tree/main/ofl/lilitaone) under the SIL Open Font License.
 
 Chest Counter is not affiliated with or endorsed by Epic Games. Fortnite is a trademark of Epic Games, Inc.
