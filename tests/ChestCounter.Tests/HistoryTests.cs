@@ -28,8 +28,9 @@ public sealed class HistoryTests : IDisposable
         var current = tracker.Current;
 
         Assert.Equal(new LastMatch(27, 6.4, today.AddHours(14).AddMinutes(15)), current.Last);
-        Assert.Equal(39, current.Today);
-        Assert.Equal(27, current.Best);
+        Assert.Equal(33, current.Last!.Total);
+        Assert.Equal(33 + 12, current.Today);
+        Assert.Equal(33, current.Best);
     }
 
     [Fact]

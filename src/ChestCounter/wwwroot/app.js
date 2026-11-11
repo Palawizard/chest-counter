@@ -21,9 +21,10 @@ const STRINGS = {
     restart: "Redémarrer",
     noGames: "Aucune partie lue pour l'instant.",
     measuredDetail: (games, average) => `Sur ${games} ${frPlural(games, "partie")}, ${average} en moyenne.`,
-    estimatedDetail: (missed, games, broken, basis) => {
+    estimatedDetail: (missed, games, broken, basis, perMatch) => {
       const pace = basis === null ? "" : basis === "1" ? ", au rythme de ta première partie" : `, au rythme de tes ${basis} premières parties`;
-      return `${missed} pour ${games} ${frPlural(games, "partie")} sans replay${pace}. ${broken} ${frPlural(broken, "cassé")} sans être ${frPlural(broken, "ouvert")}.`;
+      const average = perMatch === null ? "" : `, environ ${perMatch} par partie`;
+      return `${missed} pour ${games} ${frPlural(games, "partie")} sans replay${pace}. ${broken} ${frPlural(broken, "cassé")} sans être ${frPlural(broken, "ouvert")}${average}.`;
     },
     scanning: "Analyse des replays en cours.",
     inProgress: "La partie en cours sera comptée à la fin.",
@@ -35,8 +36,9 @@ const STRINGS = {
     loading: "Chargement.",
     cut: (n) => (n === "1" ? "1 partie interrompue, non comptée." : `${n} parties interrompues, non comptées.`),
     restored: "Tes résultats ont été restaurés depuis la sauvegarde.",
+    totalAverage: (n) => `Environ ${n} par partie`,
     lastMatch: "Partie d'avant",
-    lastDetail: (when, broken) => `Finie ${when}${broken === "0" ? "" : `, environ ${broken} ${frPlural(broken, "cassé")} sans être ${frPlural(broken, "ouvert")}`}.`,
+    lastDetail: (when, opened, broken) => `Finie ${when}. ${opened} ${frPlural(opened, "ouvert")}${broken === "0" ? "" : ` et environ ${broken} ${frPlural(broken, "cassé")} sans être ${frPlural(broken, "ouvert")}`}.`,
     at: (time) => `à ${time}`,
     onDay: (day, time) => `le ${day} à ${time}`,
     lastDay: (today, best) => `Aujourd'hui : ${today} · Meilleure partie : ${best}`,
@@ -63,9 +65,10 @@ const STRINGS = {
     restart: "Restart",
     noGames: "No match read yet.",
     measuredDetail: (games, average) => `Over ${games} ${games === "1" ? "match" : "matches"}, ${average} on average.`,
-    estimatedDetail: (missed, games, broken, basis) => {
+    estimatedDetail: (missed, games, broken, basis, perMatch) => {
       const pace = basis === null ? "" : basis === "1" ? ", at the pace of your first match" : `, at the pace of your first ${basis} matches`;
-      return `${missed} for ${games} ${games === "1" ? "match" : "matches"} without a replay${pace}. ${broken} broken unopened.`;
+      const average = perMatch === null ? "" : `, about ${perMatch} per match`;
+      return `${missed} for ${games} ${games === "1" ? "match" : "matches"} without a replay${pace}. ${broken} broken unopened${average}.`;
     },
     scanning: "Reading replays.",
     inProgress: "The match in progress will be counted when it ends.",
@@ -77,8 +80,9 @@ const STRINGS = {
     loading: "Loading.",
     cut: (n) => (n === "1" ? "1 match cut short, not counted." : `${n} matches cut short, not counted.`),
     restored: "Your results were restored from the backup.",
+    totalAverage: (n) => `About ${n} per match`,
     lastMatch: "Last match",
-    lastDetail: (when, broken) => `Ended ${when}${broken === "0" ? "" : `, about ${broken} broken unopened`}.`,
+    lastDetail: (when, opened, broken) => `Ended ${when}. ${opened} opened${broken === "0" ? "" : ` and about ${broken} broken unopened`}.`,
     at: (time) => `at ${time}`,
     onDay: (day, time) => `on ${day} at ${time}`,
     lastDay: (today, best) => `Today: ${today} · Best match: ${best}`,
@@ -208,8 +212,12 @@ function render(state) {
     whole.format(Math.round(state.estimated)),
     whole.format(state.gamesWithoutReplay),
     whole.format(Math.round(state.broken)),
-    state.gamesWithoutReplay > 0 && state.basisGames > 0 ? whole.format(state.basisGames) : null);
+    state.gamesWithoutReplay > 0 && state.basisGames > 0 ? whole.format(state.basisGames) : null,
+    brokenPerMatch(state));
 
+  const allGames = state.gamesAnalyzed + state.gamesWithoutReplay;
+  element("total-average").hidden = unread || allGames === 0;
+  element("total-average").textContent = allGames === 0 ? "" : t.totalAverage(oneDecimal.format(Math.round(state.total) / allGames));
   paintLast(state, unread);
   paintStamp(state);
   paintStatus(state);
@@ -234,6 +242,12 @@ function render(state) {
   previous = state;
 }
 
+// Over every match, read or estimated, like the broken figure it divides.
+function brokenPerMatch(state) {
+  const games = state.gamesAnalyzed + state.gamesWithoutReplay;
+  return games === 0 ? null : oneDecimal.format(Math.round(state.broken) / games);
+}
+
 function ended(date) {
   const sameDay = date.toDateString() === new Date().toDateString();
   return sameDay ? t.at(clock.format(date)) : t.onDay(shortDay.format(date), clock.format(date));
@@ -247,8 +261,8 @@ function paintLast(state, unread) {
     return;
   }
 
-  element("last-chests").textContent = whole.format(last.chests);
-  element("last-detail").textContent = t.lastDetail(ended(new Date(last.endedAt)), whole.format(Math.round(last.broken)));
+  element("last-chests").textContent = whole.format(Math.round(last.chests + last.broken));
+  element("last-detail").textContent = t.lastDetail(ended(new Date(last.endedAt)), whole.format(last.chests), whole.format(Math.round(last.broken)));
   element("last-day").textContent = t.lastDay(whole.format(state.today), whole.format(state.best));
 }
 
@@ -268,7 +282,7 @@ function renderMatches(data) {
     when.textContent = stampTime.format(new Date(match.playedAt));
     const figure = document.createElement("p");
     figure.className = "figure";
-    figure.textContent = whole.format(match.chests);
+    figure.textContent = whole.format(Math.round(match.chests + match.broken));
     const detail = document.createElement("p");
     detail.className = "detail";
     const broken = Math.round(match.broken);

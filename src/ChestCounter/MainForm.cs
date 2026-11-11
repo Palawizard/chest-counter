@@ -203,7 +203,7 @@ internal sealed class MainForm : Form
         _notification.Visible = true;
         _notification.ShowBalloonTip(
             5000,
-            ChestCounter.Text.Pick($"+{last.Chests.ToString("N0", culture)} {(last.Chests > 1 ? "coffres" : "coffre")}", $"+{last.Chests.ToString("N0", culture)} {(last.Chests == 1 ? "chest" : "chests")}"),
+            ChestCounter.Text.Pick($"+{last.Total.ToString("N0", culture)} {(last.Total > 1 ? "coffres" : "coffre")}", $"+{last.Total.ToString("N0", culture)} {(last.Total == 1 ? "chest" : "chests")}"),
             ChestCounter.Text.Pick($"Total estimé : {summary.Total.ToString("N0", culture)}", $"Estimated total: {summary.Total.ToString("N0", culture)}"),
             ToolTipIcon.None);
     }

@@ -64,7 +64,7 @@ The big number is the estimated total. The line under it, Read from replays, cou
 
 If you played matches before installing Chest Counter, or Fortnite already deleted their replays, enter how many in **Matches without a replay**. Those are almost always your oldest matches, played before you got better at finding chests, so they are estimated from your first 20 counted matches.
 
-**Last match** shows the chests you opened in your latest match, when it ended, today's chests and your best match. **See all matches** lists every counted match with its chests by type. The notification at the end of each match can be turned off at the bottom of that list.
+**Last match** shows your latest match: the chests you opened plus the ones you broke, estimated, when it ended, today's chests and your best match. **See all matches** lists every counted match with the same total and its opened chests by type. Under the big number, the average per match is the estimated total divided by all your matches. The notification at the end of each match can be turned off at the bottom of that list.
 
 ### Updating from 2.2 or earlier
 

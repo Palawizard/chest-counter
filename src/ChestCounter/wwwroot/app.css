@@ -78,6 +78,7 @@ h1, h2, p { margin: 0; }
 .name { font-size: 15px; font-weight: 600; }
 .unit { color: var(--ink-soft); font-weight: 400; }
 
+.total-average { color: var(--ink-soft); font-size: 13px; }
 .stamp { display: flex; gap: 6px; align-items: center; color: var(--ink-soft); font-size: 13px; }
 .stamp > :first-child { color: var(--gold-text); font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; font-size: 11.5px; }
 
@@ -91,7 +92,8 @@ h1, h2, p { margin: 0; }
   padding-bottom: 9px;
   border-bottom: 2px solid var(--gold);
 }
-.entry-estimated { border-bottom-style: dashed; }
+/* The last-match figure adds broken chests, which are estimated. */
+.entry-estimated, .entry-last { border-bottom-style: dashed; }
 .entry h2 { grid-area: title; font-size: 15px; font-weight: 600; }
 .entry .figure { grid-area: figure; font-family: var(--figures); font-size: 30px; line-height: 1; color: var(--total); }
 .entry .detail { grid-area: detail; color: var(--ink-soft); font-size: 13px; text-wrap: pretty; }
