@@ -33,40 +33,13 @@ It reads the replay files Fortnite saves after each match, finds every chest you
 
 ## How it compares
 
-Chest Counter is not the only way to count your chests. As of 11 November 2026, there are four other kinds of counters:
+| | Chest Counter | Similar apps | Manual counters | In-game counter |
+|---|---|---|---|---|
+| Counts on its own | Yes | Yes | No, you press +1 after each chest | Yes |
+| Keeps counting past 1,000 chests | Yes | Yes | Yes | No, players report it stops at the 1,000-chest stage |
+| Makes up for matches whose replay is gone | Yes, estimated on a separate line | No, for most of them | No | Yes, it counts every match |
 
-- **The in-game counter**: Quests tab, Treasure Hunt section.
-- **Manual counters**: web pages where you press +1 after each chest, such as [Loot Counter](https://lootcounter.com/) or the [Pirate Token Tracker](https://pirateshoptoken.com/pirate-token-tracker/).
-- **Other replay apps**: Windows apps that read the same replay files, such as [Fortnite-ChestCounter](https://github.com/LED-N/Fortnite-ChestCounter), [fortnite-chest-counter](https://github.com/rossalv/fortnite-chest-counter), [chest-tracker](https://github.com/thedackss/chest-tracker) and [Fortnite Chest Tracker](https://github.com/ayman-studio/fortnite-chest-tracker).
-- **Replay websites**: [How Many Chests](https://howmanychests.com/), where you drop your replays on the page, and [Chest Tracker](https://chesttracker.xyz/), whose Windows app sends your matches to a profile on the site.
-
-| | Chest Counter | In-game counter | Manual counters | Other replay apps | Replay websites |
-|---|---|---|---|---|---|
-| Counts on its own | Yes | Yes | No, you press +1 after each chest | Yes | Yes, once your replays are sent |
-| Keeps counting past 1,000 chests | Yes | Players report that it stops at the 1,000-chest stage | Yes | Yes | Yes |
-| Matches played before you started | Estimated from your first 20 counted matches, on a separate line | Counted | A starting number to type | Lost, a starting number to type, or an estimate, depending on the app | Only those whose replay is still on your PC |
-| Chests you broke without opening | Estimated, on a separate line | Not documented | If you count them | Counted with the opened ones in most of them | Shown apart by Chest Tracker |
-| Shown over the game | No, a window to keep beside it | No, in the Quests tab | No, on another screen or a phone | Yes, as an overlay | No |
-| Your replays stay on your PC | Yes | Nothing is read | Nothing is read | Yes | No |
-
-The in-game counter is the official number. Compare it with Chest Counter's **Read from replays** line, not with the estimated total.
-
-### Replay apps side by side
-
-| | Chest Counter | [Fortnite-ChestCounter](https://github.com/LED-N/Fortnite-ChestCounter) | [fortnite-chest-counter](https://github.com/rossalv/fortnite-chest-counter) | [chest-tracker](https://github.com/thedackss/chest-tracker) | [Fortnite Chest Tracker](https://github.com/ayman-studio/fortnite-chest-tracker) |
-|---|---|---|---|---|---|
-| Overlay over the game | No | Yes, and an OBS source | Yes, click-through | Yes | Yes, and an OBS source |
-| Matches played while it is closed | Read at the next launch, while the replay exists | Not counted | Not stated | Not stated | Not stated |
-| Keeps a match after Fortnite deletes its replay | Yes | Yes | Yes | Not stated | Yes, and can keep a copy of the replays |
-| Matches whose replay was already gone | Estimated from your first 20 counted matches | Not counted | Not counted | You start from your in-game count | Estimated from your match count on fortnite.gg |
-| Chests you broke without opening | Estimated (closest player within 10 m), on a separate line | Counted | Not counted | In the total, not in the quest count | Counted |
-| Install and updates | Installer, updates itself | Single exe, checks for updates | Single exe, needs the .NET 10 Desktop Runtime | Single exe | Single exe or optional install, can update itself |
-| Also | French and English | Several accounts, treasure hunt prizes, English and French | Per-match table in a console tool | Notification and HTML report after each match | Pirate token odds, several accounts, English, French and Spanish |
-| License | GPL-3.0 | MIT | MIT | MIT | MIT code, GPL-3.0 exe |
-
-Checked on 11 November 2026 from each project's own page; "Not stated" means the page does not say. New counters appear every week, and these projects change fast.
-
-Most of these apps, Chest Counter included, read replays with [FortniteReplayDecompressor](https://github.com/Shiqan/FortniteReplayDecompressor).
+Compared in November 2026. The in-game counter is the official number: compare it with the **Read from replays** line, not with the estimated total.
 
 ## Install
 
