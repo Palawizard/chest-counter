@@ -12,7 +12,7 @@ public sealed class ChestDestructionTests
         var reader = new OwnerChestReader();
         foreach (var export in exports)
         {
-            reader.Track(Chest, export);
+            reader.Track("chest", Chest, 0, export);
         }
 
         return reader.DestroyedWithLootInside;

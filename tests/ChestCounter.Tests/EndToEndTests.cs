@@ -35,6 +35,23 @@ public sealed class EndToEndTests : IDisposable
     }
 
     [Fact]
+    public void Real_replay_cut_by_a_crash_is_reported_apart_from_the_match_in_progress()
+    {
+        var cut = ReplayFixture.CopyTo(Demos, "cut.replay");
+        ReplayFixture.SetLive(cut, true);
+        File.SetLastWriteTimeUtc(cut, DateTime.UtcNow.AddMinutes(-11));
+        var live = ReplayFixture.CopyTo(Demos, "live.replay");
+        ReplayFixture.SetLive(live, true);
+        var tracker = new ChestTracker(StateFile, ReplayAnalyzer.Analyze);
+
+        tracker.Scan(Demos);
+
+        Assert.Equal(1, tracker.Current.Cut);
+        Assert.Equal(1, tracker.Current.InProgress);
+        Assert.Equal(0, tracker.Current.GamesAnalyzed);
+    }
+
+    [Fact]
     public void Real_replay_outside_the_season_is_excluded()
     {
         var path = ReplayFixture.CopyTo(Demos, "old.replay");

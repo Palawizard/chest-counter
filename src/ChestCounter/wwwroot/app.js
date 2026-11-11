@@ -33,6 +33,21 @@ const STRINGS = {
     errorInput: (max) => `Entre un nombre entre 0 et ${max}.`,
     update: (version) => `La version ${version} est prête.`,
     loading: "Chargement.",
+    cut: (n) => (n === "1" ? "1 partie interrompue, non comptée." : `${n} parties interrompues, non comptées.`),
+    restored: "Tes résultats ont été restaurés depuis la sauvegarde.",
+    lastMatch: "Partie d'avant",
+    lastDetail: (when, broken) => `Finie ${when}${broken === "0" ? "" : `, environ ${broken} ${frPlural(broken, "cassé")} sans être ${frPlural(broken, "ouvert")}`}.`,
+    at: (time) => `à ${time}`,
+    onDay: (day, time) => `le ${day} à ${time}`,
+    lastDay: (today, best) => `Aujourd'hui : ${today} · Meilleure partie : ${best}`,
+    openMatches: "Voir les parties",
+    back: "Retour",
+    matchesTitle: "Parties",
+    notify: "Me prévenir à la fin de chaque partie",
+    kinds: { normal: ["normal", "normaux"], rare: ["rare", "rares"], buried: ["enterré", "enterrés"], relic: ["relique", "reliques"], poster: ["avis de recherche", "avis de recherche"] },
+    matchBroken: (n) => `environ ${n} ${frPlural(n, "cassé")} sans être ${frPlural(n, "ouvert")}`,
+    notice: (before, after, moved) => `Comptage corrigé : les coffres revus étaient comptés deux fois. Lu dans les replays : ${after} au lieu de ${before}.${moved === "0" ? "" : moved === "1" ? " 1 partie sans replay est maintenant estimée." : ` ${moved} parties sans replay sont maintenant estimées.`}`,
+    gotIt: "Compris",
   },
   en: {
     appName: "Chest Counter",
@@ -60,6 +75,21 @@ const STRINGS = {
     errorInput: (max) => `Enter a number between 0 and ${max}.`,
     update: (version) => `Version ${version} is ready.`,
     loading: "Loading.",
+    cut: (n) => (n === "1" ? "1 match cut short, not counted." : `${n} matches cut short, not counted.`),
+    restored: "Your results were restored from the backup.",
+    lastMatch: "Last match",
+    lastDetail: (when, broken) => `Ended ${when}${broken === "0" ? "" : `, about ${broken} broken unopened`}.`,
+    at: (time) => `at ${time}`,
+    onDay: (day, time) => `on ${day} at ${time}`,
+    lastDay: (today, best) => `Today: ${today} · Best match: ${best}`,
+    openMatches: "See all matches",
+    back: "Back",
+    matchesTitle: "Matches",
+    notify: "Notify me when each match ends",
+    kinds: { normal: ["normal", "normal"], rare: ["rare", "rare"], buried: ["buried", "buried"], relic: ["relic", "relics"], poster: ["wanted poster", "wanted posters"] },
+    matchBroken: (n) => `about ${n} broken unopened`,
+    notice: (before, after, moved) => `Count corrected: chests seen again were counted twice. Read from replays: ${after} instead of ${before}.${moved === "0" ? "" : moved === "1" ? " 1 match without a replay is now estimated." : ` ${moved} matches without a replay are now estimated.`}`,
+    gotIt: "Got it",
   },
 };
 
@@ -72,6 +102,9 @@ const grouped = new Intl.NumberFormat(locale, { maximumFractionDigits: 0 });
 const whole = { format: (value) => grouped.format(value).replace(/\u202f/g, "\u00a0") };
 const oneDecimal = new Intl.NumberFormat(locale, { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 const stampTime = new Intl.DateTimeFormat(locale, { day: "numeric", month: "short", hour: "numeric", minute: "2-digit" });
+const clock = new Intl.DateTimeFormat(locale, { hour: "numeric", minute: "2-digit" });
+const shortDay = new Intl.DateTimeFormat(locale, { day: "numeric", month: "short" });
+const KIND_ORDER = ["normal", "rare", "buried", "relic", "poster"];
 
 const element = (id) => document.getElementById(id);
 const games = element("games");
@@ -114,8 +147,14 @@ function statusFor(state) {
   }
 
   const parts = state.scanning ? [t.scanning] : [];
+  if (state.restored) {
+    parts.push(t.restored);
+  }
   if (state.inProgress > 0) {
     parts.push(t.inProgress);
+  }
+  if (state.cut > 0) {
+    parts.push(t.cut(whole.format(state.cut)));
   }
   if (state.failed > 0) {
     parts.push(t.failed(whole.format(state.failed)));
@@ -171,8 +210,17 @@ function render(state) {
     whole.format(Math.round(state.broken)),
     state.gamesWithoutReplay > 0 && state.basisGames > 0 ? whole.format(state.basisGames) : null);
 
+  paintLast(state, unread);
   paintStamp(state);
   paintStatus(state);
+
+  element("notice").hidden = !state.notice;
+  if (state.notice) {
+    element("notice-text").textContent = t.notice(whole.format(state.notice.before), whole.format(state.notice.after), whole.format(state.notice.moved));
+  }
+  if (!element("matches").hidden && previous !== null && previous.gamesAnalyzed !== state.gamesAnalyzed) {
+    webview.postMessage({ type: "matches" });
+  }
 
   element("update").hidden = !state.update;
   if (state.update) {
@@ -184,6 +232,63 @@ function render(state) {
     games.removeAttribute("aria-invalid");
   }
   previous = state;
+}
+
+function ended(date) {
+  const sameDay = date.toDateString() === new Date().toDateString();
+  return sameDay ? t.at(clock.format(date)) : t.onDay(shortDay.format(date), clock.format(date));
+}
+
+function paintLast(state, unread) {
+  const last = state.last;
+  element("last").hidden = unread || !last;
+  element("open-matches").hidden = unread || !last;
+  if (!last || unread) {
+    return;
+  }
+
+  element("last-chests").textContent = whole.format(last.chests);
+  element("last-detail").textContent = t.lastDetail(ended(new Date(last.endedAt)), whole.format(Math.round(last.broken)));
+  element("last-day").textContent = t.lastDay(whole.format(state.today), whole.format(state.best));
+}
+
+function kindsText(kinds) {
+  return KIND_ORDER.filter((kind) => kinds[kind] > 0)
+    .map((kind) => `${whole.format(kinds[kind])} ${t.kinds[kind][kinds[kind] > 1 ? 1 : 0]}`)
+    .join(", ");
+}
+
+function renderMatches(data) {
+  const list = element("match-list");
+  list.replaceChildren(...data.matches.map((match) => {
+    const item = document.createElement("li");
+    item.className = "match";
+    const when = document.createElement("p");
+    when.className = "match-when";
+    when.textContent = stampTime.format(new Date(match.playedAt));
+    const figure = document.createElement("p");
+    figure.className = "figure";
+    figure.textContent = whole.format(match.chests);
+    const detail = document.createElement("p");
+    detail.className = "detail";
+    const broken = Math.round(match.broken);
+    detail.textContent = [kindsText(match.kinds), broken > 0 ? t.matchBroken(whole.format(broken)) : ""].filter(Boolean).join(" · ");
+    item.append(when, figure, detail);
+    return item;
+  }));
+  element("matches-empty").hidden = data.matches.length > 0;
+  element("notify").checked = data.notify;
+}
+
+function showMatches(open) {
+  element("home").hidden = open;
+  element("matches").hidden = !open;
+  if (open) {
+    webview.postMessage({ type: "matches" });
+    element("back").focus();
+  } else {
+    element("open-matches").focus();
+  }
 }
 
 function isValid(value) {
@@ -235,7 +340,16 @@ games.addEventListener("blur", () => {
 element("less").addEventListener("click", () => step(-1));
 element("more").addEventListener("click", () => step(1));
 element("apply-update").addEventListener("click", () => webview.postMessage({ type: "applyUpdate" }));
-webview.addEventListener("message", (event) => render(event.data));
+element("dismiss-notice").addEventListener("click", () => webview.postMessage({ type: "dismissNotice" }));
+element("open-matches").addEventListener("click", () => showMatches(true));
+element("back").addEventListener("click", () => showMatches(false));
+element("notify").addEventListener("change", (event) => webview.postMessage({ type: "setNotify", value: event.target.checked }));
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape" && !element("matches").hidden) {
+    showMatches(false);
+  }
+});
+webview.addEventListener("message", (event) => (event.data.matches ? renderMatches(event.data) : render(event.data)));
 
 applyStaticText();
 webview.postMessage({ type: "ready" });

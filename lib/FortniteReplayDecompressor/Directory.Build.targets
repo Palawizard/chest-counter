@@ -1,0 +1,9 @@
+<Project>
+  <!-- Built like the published package in every configuration: its DEBUG code writes dump files
+       into the working folder. Removed just before compiling because the SDK adds DEBUG late. -->
+  <Target Name="BuildWithoutDebugCode" BeforeTargets="CoreCompile">
+    <PropertyGroup>
+      <DefineConstants>$(DefineConstants.Replace('DEBUG', ''))</DefineConstants>
+    </PropertyGroup>
+  </Target>
+</Project>
