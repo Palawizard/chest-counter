@@ -1,4 +1,7 @@
 using System.Numerics;
+using System.Security.Cryptography;
+using System.Text;
+using System.Text.Json.Serialization;
 using FortniteReplayReader.Models.NetFieldExports;
 using Unreal.Core.Contracts;
 using Unreal.Core.Models;
@@ -8,10 +11,15 @@ namespace ChestCounter;
 
 public enum ReplayStatus { InProgress, Failed, Analyzed }
 
-public sealed record MatchRecord(string Id, string FileName, DateTime PlayedAt, string Branch, int Chests, double? BrokenNearby = null, int BrokenMethod = 0)
+// Openings keeps each counted chest so a later version can correct a match whose replay Fortnite deleted.
+public sealed record MatchRecord(string Id, string FileName, DateTime PlayedAt, string Branch, int Chests, double? BrokenNearby = null, int BrokenMethod = 0, IReadOnlyList<ChestOpening>? Openings = null)
 {
     public const int CurrentBrokenMethod = 2;
 }
+
+// Short names keep state.json small: about 50 bytes per chest.
+// Chest is a hash of the chest's identity within the match, not the identity itself.
+public sealed record ChestOpening([property: JsonPropertyName("t")] double Time, [property: JsonPropertyName("c")] string Class, [property: JsonPropertyName("k")] string Chest);
 
 // NewChestClasses: chest classes read without a declared type, so a game update's new chest shows up in the log.
 public sealed record ReplayOutcome(ReplayStatus Status, MatchRecord? Match = null, string? Error = null, IReadOnlyList<string>? NewChestClasses = null);
@@ -40,7 +48,7 @@ public static class ReplayAnalyzer
 
             using var drivingStream = OpenShared(path);
             var driving = new OwnerDrivingReader().ReadOwnerDrivingTimes(drivingStream);
-            var match = new MatchRecord(replay.Header.Guid, Path.GetFileName(path), replay.Info.Timestamp, replay.Header.Branch, reader.CountOpenings(recorder), reader.EstimateBroken(recorder, driving), MatchRecord.CurrentBrokenMethod);
+            var match = new MatchRecord(replay.Header.Guid, Path.GetFileName(path), replay.Info.Timestamp, replay.Header.Branch, reader.CountOpenings(recorder), reader.EstimateBroken(recorder, driving), MatchRecord.CurrentBrokenMethod, reader.OpeningsBy(recorder));
             return new ReplayOutcome(ReplayStatus.Analyzed, match, NewChestClasses: reader.GenericClasses.Order().ToList());
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException)
@@ -114,6 +122,7 @@ internal sealed class OwnerChestReader : FortniteReplayReader.ReplayReader
     private readonly HashSet<uint> _channelsWithChestState = [];
     private readonly HashSet<string> _genericClasses = [];
     private readonly List<uint> _openers = [];
+    private readonly List<ChestOpening> _openingDetails = [];
     private readonly List<double> _openingTimes = [];
     private readonly Dictionary<uint, uint> _pawnChannels = [];
     private readonly Dictionary<uint, Vector3> _pawnPositions = [];
@@ -127,8 +136,13 @@ internal sealed class OwnerChestReader : FortniteReplayReader.ReplayReader
         _netFieldParser.GroupAlias = ChestClasses.Alias;
     }
 
-    public int CountOpenings(uint recorderPlayerState) =>
-        _openers.Count(pawn => _pawnToPlayerState.GetValueOrDefault(pawn) == recorderPlayerState);
+    public int CountOpenings(uint recorderPlayerState) => OpeningsBy(recorderPlayerState).Count;
+
+    public List<ChestOpening> OpeningsBy(uint recorderPlayerState) =>
+        _openers.Select((pawn, index) => (pawn, index))
+            .Where(opening => _pawnToPlayerState.GetValueOrDefault(opening.pawn) == recorderPlayerState)
+            .Select(opening => _openingDetails[opening.index])
+            .ToList();
 
     internal int DestroyedWithLootInside => DestroyedWithLoot().Count;
 
@@ -317,6 +331,7 @@ internal sealed class OwnerChestReader : FortniteReplayReader.ReplayReader
             {
                 _openers.Add(opener);
                 _openingTimes.Add(time);
+                _openingDetails.Add(new ChestOpening(Math.Round(time, 1), ClassOfKey(key), Hash(key)));
             }
         }
 
@@ -325,6 +340,10 @@ internal sealed class OwnerChestReader : FortniteReplayReader.ReplayReader
             MarkDestroyed(state);
         }
     }
+
+    private static string ClassOfKey(string key) => key.StartsWith('#') ? "" : ChestClasses.ClassOf(key.Split('@')[0]);
+
+    private static string Hash(string key) => Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(key)), 0, 4);
 
     private List<DestroyedChest> DestroyedWithLoot() => _chests.Values
         .Where(chest => chest.Destroyed is not null && !chest.SearchedWhenDestroyed)

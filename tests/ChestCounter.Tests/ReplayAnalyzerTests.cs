@@ -28,6 +28,20 @@ public sealed class ReplayAnalyzerTests : IDisposable
     }
 
     [Fact]
+    public void Analyze_keeps_each_counted_chest_in_a_few_bytes()
+    {
+        var path = ReplayFixture.CopyTo(_directory, "a.replay");
+
+        var match = ReplayAnalyzer.Analyze(path).Match!;
+
+        Assert.Equal(match.Chests, match.Openings!.Count);
+        Assert.All(match.Openings, opening => Assert.True(ChestClasses.IsChest(opening.Class), opening.Class));
+        Assert.Equal(match.Openings.Count, match.Openings.Select(opening => (opening.Chest, opening.Time)).Distinct().Count());
+        var bytesPerChest = System.Text.Json.JsonSerializer.Serialize(match.Openings).Length / (double)match.Openings.Count;
+        Assert.InRange(bytesPerChest, 30, 60);
+    }
+
+    [Fact]
     public void Analyze_never_modifies_the_replay()
     {
         var path = ReplayFixture.CopyTo(_directory, "a.replay");
