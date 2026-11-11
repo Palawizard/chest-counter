@@ -5,7 +5,7 @@ namespace ChestCounter;
 
 // Games without a replay are almost always the oldest ones, so they are estimated from the
 // player's earliest counted matches (PerMissingGame, over BasisGames) rather than the overall average.
-public sealed record Summary(int GamesAnalyzed, int Chests, int InProgress, int Failed, int GamesWithoutReplay, double BrokenInMatches = 0, double BrokenPerGame = 0, double PerMissingGame = 0, int BasisGames = 0, int Cut = 0)
+public sealed record Summary(int GamesAnalyzed, int Chests, int InProgress, int Failed, int GamesWithoutReplay, double BrokenInMatches = 0, double BrokenPerGame = 0, double PerMissingGame = 0, int BasisGames = 0, int Cut = 0, LastMatch? Last = null, int Today = 0, int Best = 0)
 {
     public double Average => GamesAnalyzed == 0 ? 0 : (double)Chests / GamesAnalyzed;
 
@@ -40,9 +40,14 @@ public sealed partial class ChestTracker
         _stateFile = stateFile;
         _analyze = analyze;
         _state = Load();
-        if (_state.Matches.Any(m => m.Method < MatchRecord.CurrentMethod) && File.Exists(stateFile) && !File.Exists(BeforeMigrationFile))
+        if (_state.Matches.Any(m => m.Method < MatchRecord.CurrentMethod))
         {
-            File.Copy(stateFile, BeforeMigrationFile);
+            if (File.Exists(stateFile) && !File.Exists(BeforeMigrationFile))
+            {
+                File.Copy(stateFile, BeforeMigrationFile);
+            }
+
+            _state.Notice ??= new UpdateNotice { ReadBefore = _state.Matches.Sum(m => m.Chests) };
         }
 
         _matches = _state.Matches.ToDictionary(m => m.Id);
@@ -65,8 +70,60 @@ public sealed partial class ChestTracker
                 var (brokenInMatches, brokenPerGame) = BrokenEstimates();
                 var basis = Earliest(_matches.Values);
                 var perMissingGame = basis.Count == 0 ? 0 : basis.Average(m => m.Chests);
-                return new Summary(_matches.Count, _matches.Values.Sum(m => m.Chests), _inProgress, _failedThisRun.Count, _state.GamesWithoutReplay, brokenInMatches, brokenPerGame, perMissingGame, basis.Count, _cut);
+                return new Summary(_matches.Count, _matches.Values.Sum(m => m.Chests), _inProgress, _failedThisRun.Count, _state.GamesWithoutReplay, brokenInMatches, brokenPerGame, perMissingGame, basis.Count, _cut, MatchHistory.Last(_matches.Values), MatchHistory.On(_matches.Values, DateTime.Now), MatchHistory.Best(_matches.Values));
             }
+        }
+    }
+
+    // The one-time message after the recount, until the player closes it.
+    public UpdateNotice? Notice
+    {
+        get
+        {
+            lock (_gate)
+            {
+                return _state.Notice is { Ready: true, Dismissed: false } notice && (notice.ReadBefore != notice.ReadAfter || notice.Moved > 0) ? notice : null;
+            }
+        }
+    }
+
+    public bool Notify
+    {
+        get
+        {
+            lock (_gate)
+            {
+                return _state.Notify;
+            }
+        }
+    }
+
+    public IReadOnlyList<MatchLine> Matches()
+    {
+        lock (_gate)
+        {
+            return MatchHistory.Lines(_matches.Values);
+        }
+    }
+
+    public void DismissNotice()
+    {
+        lock (_gate)
+        {
+            if (_state.Notice is { } notice)
+            {
+                notice.Dismissed = true;
+                Save();
+            }
+        }
+    }
+
+    public void SetNotify(bool notify)
+    {
+        lock (_gate)
+        {
+            _state.Notify = notify;
+            Save();
         }
     }
 
@@ -141,6 +198,13 @@ public sealed partial class ChestTracker
             if (present.Count > 0)
             {
                 RetireOldMatchesWithoutReplay(present);
+                if (_state.Notice is { Ready: false } notice)
+                {
+                    notice.ReadAfter = _matches.Values.Sum(m => m.Chests);
+                    notice.Moved = _state.Retired.Count;
+                    notice.Ready = true;
+                    Save();
+                }
             }
         }
 
@@ -281,5 +345,24 @@ public sealed partial class ChestTracker
 
         // Matches moved to GamesWithoutReplay; one whose replay comes back is read again and moved back.
         public HashSet<string> Retired { get; set; } = [];
+
+        public UpdateNotice? Notice { get; set; }
+
+        public bool Notify { get; set; } = true;
     }
+}
+
+// Read chests before the recount, after it, and matches moved to the estimate. Ready once the first
+// full scan of 2.3 is done.
+public sealed class UpdateNotice
+{
+    public int ReadBefore { get; set; }
+
+    public int ReadAfter { get; set; }
+
+    public int Moved { get; set; }
+
+    public bool Ready { get; set; }
+
+    public bool Dismissed { get; set; }
 }

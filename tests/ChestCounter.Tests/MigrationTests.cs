@@ -124,6 +124,49 @@ public sealed class MigrationTests : IDisposable
         Assert.Equal(0, tracker.Current.GamesWithoutReplay);
     }
 
+    [Fact]
+    public void Recount_shows_its_message_once_with_the_numbers_before_and_after()
+    {
+        WriteStateFrom222(("id-a", "a.replay", 20), ("id-gone", "gone.replay", 30));
+        AddReplay("a.replay", "id-a", 11);
+
+        var tracker = NewTracker();
+        Assert.Null(tracker.Notice);
+        tracker.Scan(Demos);
+
+        var notice = tracker.Notice!;
+        Assert.Equal((50, 11, 1), (notice.ReadBefore, notice.ReadAfter, notice.Moved));
+        Assert.NotNull(NewTracker().Notice);
+
+        tracker.DismissNotice();
+        var restarted = NewTracker();
+        restarted.Scan(Demos);
+        Assert.Null(restarted.Notice);
+    }
+
+    [Fact]
+    public void Recount_that_changes_nothing_shows_no_message()
+    {
+        WriteStateFrom222(("id-a", "a.replay", 11));
+        AddReplay("a.replay", "id-a", 11);
+
+        var tracker = NewTracker();
+        tracker.Scan(Demos);
+
+        Assert.Null(tracker.Notice);
+    }
+
+    [Fact]
+    public void First_install_shows_no_message()
+    {
+        AddReplay("a.replay", "id-a", 11);
+
+        var tracker = NewTracker();
+        tracker.Scan(Demos);
+
+        Assert.Null(tracker.Notice);
+    }
+
     private ChestTracker NewTracker() => new(StateFile, path =>
     {
         var name = Path.GetFileName(path);

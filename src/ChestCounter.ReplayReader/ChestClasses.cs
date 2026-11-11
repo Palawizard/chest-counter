@@ -25,4 +25,11 @@ internal static class ChestClasses
         IsChest(ClassOf(group.PathName)) && group.NetFieldExports.Any(field => field is not null && SearchFields.Contains(field.Name));
 
     public static string? Alias(NetFieldExportGroup group) => IsSearchableChest(group) ? GenericChest.Path : null;
+
+    public static string KindOf(string className) =>
+        className.Contains("Rare", StringComparison.OrdinalIgnoreCase) ? "rare"
+        : className.Contains("Buried", StringComparison.OrdinalIgnoreCase) ? "buried"
+        : className.Contains("Relic", StringComparison.OrdinalIgnoreCase) ? "relic"
+        : className.Contains("Booty", StringComparison.OrdinalIgnoreCase) || className.Contains("Poster", StringComparison.OrdinalIgnoreCase) ? "poster"
+        : "normal";
 }
