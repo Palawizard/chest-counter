@@ -130,8 +130,8 @@ button:active { transform: scale(0.97); }
 .status[data-tone="error"] { color: var(--alert); font-weight: 600; }
 .update { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-top: 8px; border-top: 1px solid var(--rule); font-size: 13px; }
 #apply-update, #dismiss-notice { flex: none; height: 32px; padding: 0 14px; border: 0; background: var(--button); color: var(--button-ink); font-weight: 700; }
-.notice { display: grid; justify-items: end; gap: 8px; padding-top: 8px; border-top: 1px solid var(--rule); font-size: 13px; }
-.notice p { justify-self: stretch; text-wrap: pretty; }
+.notice { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; padding-top: 8px; border-top: 1px solid var(--rule); font-size: 13px; }
+.notice p { text-wrap: pretty; }
 
 @media (hover: hover) and (pointer: fine) {
   .stepper button:hover { background: var(--press); }
