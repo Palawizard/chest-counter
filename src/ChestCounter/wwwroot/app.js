@@ -347,9 +347,11 @@ function paintSettings(settings) {
   obsHint.dataset.tone = settings.obsFailed ? "error" : "normal";
   element("overlay-move").hidden = !settings.overlay;
   element("toggle-overlay").setAttribute("aria-pressed", String(settings.overlay));
-  const move = element("move-overlay");
-  move.textContent = settings.overlayMoving ? t.lockHere : t.move;
-  move.setAttribute("aria-pressed", String(Boolean(settings.overlayMoving)));
+  element("quick-move").hidden = !settings.overlay;
+  for (const move of [element("move-overlay"), element("quick-move")]) {
+    move.textContent = settings.overlayMoving ? t.lockHere : t.move;
+    move.setAttribute("aria-pressed", String(Boolean(settings.overlayMoving)));
+  }
   element("obs-address").hidden = !settings.obsAddress;
   element("obs-url").textContent = settings.obsAddress ?? "";
 }
@@ -428,6 +430,7 @@ element("overlay").addEventListener("change", (event) => webview.postMessage({ t
 element("obs").addEventListener("change", (event) => webview.postMessage({ type: "setObs", value: event.target.checked }));
 element("start-with-fortnite").addEventListener("change", (event) => webview.postMessage({ type: "setStartWithFortnite", value: event.target.checked }));
 element("move-overlay").addEventListener("click", () => webview.postMessage({ type: "moveOverlay" }));
+element("quick-move").addEventListener("click", () => webview.postMessage({ type: "moveOverlay" }));
 element("toggle-overlay").addEventListener("click", () => webview.postMessage({ type: "setOverlay", value: !element("overlay").checked }));
 element("copy-obs").addEventListener("click", () => {
   webview.postMessage({ type: "copyObs" });

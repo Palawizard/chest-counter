@@ -75,7 +75,7 @@ body {
 h1, h2, p { margin: 0; }
 
 .mark { display: block; width: 26px; height: 26px; }
-.name { font-size: 15px; font-weight: 600; }
+.name { min-width: 0; font-size: 15px; font-weight: 600; }
 .unit { color: var(--ink-soft); font-weight: 400; }
 
 .total-average { color: var(--ink-soft); font-size: 13px; }
@@ -139,7 +139,7 @@ button:active { transform: scale(0.97); }
   .stepper button:hover { background: var(--press); }
   #apply-update:hover, #dismiss-notice:hover { background: var(--button-hover); }
   .open-matches:hover, .back:hover, #copy-obs:hover, #move-overlay:hover { background: var(--press); }
-  .top-button:hover { background: var(--press); }
+  .top-button:hover, .top-actions button:hover { background: var(--press); }
   #toggle-overlay[aria-pressed="true"]:hover { background: var(--button-hover); }
 }
 
@@ -151,9 +151,9 @@ button:active { transform: scale(0.97); }
 .top { display: flex; align-items: center; gap: 10px; padding: 14px 22px 0; }
 .top-button { display: grid; place-items: center; width: 26px; height: 26px; padding: 0; border-color: transparent; border-radius: 8px; }
 .top-button svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; }
-#toggle-overlay { margin-left: auto; margin-right: -6px; }
-#toggle-overlay .solid { fill: currentColor; stroke: none; }
-#toggle-overlay[aria-pressed="true"] { background: var(--button); color: var(--button-ink); }
+.top-actions { display: flex; gap: 6px; margin-left: auto; margin-right: -4px; }
+.top-actions button { height: 28px; padding: 0 10px; font-size: 13px; white-space: nowrap; }
+#toggle-overlay[aria-pressed="true"] { border-color: transparent; background: var(--button); color: var(--button-ink); font-weight: 700; }
 #open-settings circle { fill: var(--ground); }
 .page { display: grid; grid-template-rows: auto 1fr; gap: 16px; padding: 10px 22px 16px; }
 .view { display: grid; align-content: start; gap: 16px; min-width: 0; }
