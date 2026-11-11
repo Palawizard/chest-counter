@@ -9,7 +9,7 @@ using Unreal.Core.Models.Enums;
 
 namespace ChestCounter;
 
-public enum ReplayStatus { InProgress, Failed, Analyzed }
+public enum ReplayStatus { InProgress, Failed, Analyzed, Cut }
 
 // Method is the analysis that produced the record: older records are read again while their replay
 // exists. Openings keeps each counted chest so a later version can correct a match whose replay is gone.
@@ -30,6 +30,10 @@ public static class ReplayAnalyzer
 {
     private const uint FileMagic = 0x1CA2E27F;
 
+    // A match quit from the menu leaves a finished replay; one still marked live with no write for
+    // this long was cut by a crash and will never be finished.
+    internal static readonly TimeSpan CutAfter = TimeSpan.FromMinutes(10);
+
     public static ReplayOutcome Analyze(string path)
     {
         try
@@ -37,7 +41,7 @@ public static class ReplayAnalyzer
             using var stream = OpenShared(path);
             if (IsInProgress(stream))
             {
-                return new ReplayOutcome(ReplayStatus.InProgress);
+                return new ReplayOutcome(DateTime.UtcNow - File.GetLastWriteTimeUtc(path) >= CutAfter ? ReplayStatus.Cut : ReplayStatus.InProgress);
             }
 
             stream.Position = 0;

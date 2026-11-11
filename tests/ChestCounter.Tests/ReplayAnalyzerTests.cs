@@ -64,6 +64,19 @@ public sealed class ReplayAnalyzerTests : IDisposable
     }
 
     [Fact]
+    public void Analyze_reports_a_live_replay_untouched_for_ten_minutes_as_cut()
+    {
+        var path = ReplayFixture.CopyTo(_directory, "a.replay");
+        ReplayFixture.SetLive(path, true);
+
+        File.SetLastWriteTimeUtc(path, DateTime.UtcNow.AddMinutes(-11));
+        Assert.Equal(ReplayStatus.Cut, ReplayAnalyzer.Analyze(path).Status);
+
+        File.SetLastWriteTimeUtc(path, DateTime.UtcNow.AddMinutes(-2));
+        Assert.Equal(ReplayStatus.InProgress, ReplayAnalyzer.Analyze(path).Status);
+    }
+
+    [Fact]
     public void Analyze_reports_a_file_that_is_not_a_replay_as_failed()
     {
         var path = Path.Combine(_directory, "bad.replay");

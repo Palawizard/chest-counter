@@ -5,7 +5,7 @@ namespace ChestCounter;
 
 // Games without a replay are almost always the oldest ones, so they are estimated from the
 // player's earliest counted matches (PerMissingGame, over BasisGames) rather than the overall average.
-public sealed record Summary(int GamesAnalyzed, int Chests, int InProgress, int Failed, int GamesWithoutReplay, double BrokenInMatches = 0, double BrokenPerGame = 0, double PerMissingGame = 0, int BasisGames = 0)
+public sealed record Summary(int GamesAnalyzed, int Chests, int InProgress, int Failed, int GamesWithoutReplay, double BrokenInMatches = 0, double BrokenPerGame = 0, double PerMissingGame = 0, int BasisGames = 0, int Cut = 0)
 {
     public double Average => GamesAnalyzed == 0 ? 0 : (double)Chests / GamesAnalyzed;
 
@@ -32,6 +32,7 @@ public sealed partial class ChestTracker
     private readonly HashSet<string> _loggedChestClasses = [];
     private readonly HashSet<string> _needReanalysis;
     private int _inProgress;
+    private int _cut;
 
     public ChestTracker(string stateFile, Func<string, ReplayOutcome> analyze)
     {
@@ -64,7 +65,7 @@ public sealed partial class ChestTracker
                 var (brokenInMatches, brokenPerGame) = BrokenEstimates();
                 var basis = Earliest(_matches.Values);
                 var perMissingGame = basis.Count == 0 ? 0 : basis.Average(m => m.Chests);
-                return new Summary(_matches.Count, _matches.Values.Sum(m => m.Chests), _inProgress, _failedThisRun.Count, _state.GamesWithoutReplay, brokenInMatches, brokenPerGame, perMissingGame, basis.Count);
+                return new Summary(_matches.Count, _matches.Values.Sum(m => m.Chests), _inProgress, _failedThisRun.Count, _state.GamesWithoutReplay, brokenInMatches, brokenPerGame, perMissingGame, basis.Count, _cut);
             }
         }
     }
@@ -82,6 +83,7 @@ public sealed partial class ChestTracker
     public void Scan(string demosDirectory, Action? progress = null, CancellationToken cancellation = default)
     {
         var inProgress = 0;
+        var cut = 0;
         var present = new HashSet<string>();
         foreach (var path in Directory.EnumerateFiles(demosDirectory, "*.replay", SearchOption.TopDirectoryOnly).Order())
         {
@@ -107,6 +109,10 @@ public sealed partial class ChestTracker
                 {
                     inProgress++;
                 }
+                else if (outcome.Status == ReplayStatus.Cut)
+                {
+                    cut++;
+                }
                 else if (outcome.Status == ReplayStatus.Failed)
                 {
                     _failedThisRun.Add(fileName);
@@ -131,6 +137,7 @@ public sealed partial class ChestTracker
         lock (_gate)
         {
             _inProgress = inProgress;
+            _cut = cut;
             if (present.Count > 0)
             {
                 RetireOldMatchesWithoutReplay(present);
