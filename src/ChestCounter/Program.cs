@@ -10,17 +10,31 @@ internal static class Program
         VelopackApp.Build()
             .OnAfterInstallFastCallback(_ => AfterInstallOrUpdate())
             .OnAfterUpdateFastCallback(_ => AfterInstallOrUpdate())
+            .OnBeforeUninstallFastCallback(_ => StartWithFortnite.Set(false))
             .Run();
 
         if (args is [IsolatedAnalyzer.Argument, var replay])
         {
+            NativeMethods.RunInBackground();
             IsolatedAnalyzer.Run(replay, Console.Out);
             return 0;
         }
 
+        if (args is [StartWithFortnite.Argument])
+        {
+            return StartWithFortnite.RunStandby();
+        }
+
+        var background = args.Contains("--background");
+        var paths = args.Where(arg => !arg.StartsWith("--", StringComparison.Ordinal)).ToArray();
         var localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-        var demos = args.Length > 0 ? args[0] : Path.Combine(localAppData, "FortniteGame", "Saved", "Demos");
-        var stateFile = args.Length > 1 ? args[1] : Path.Combine(localAppData, "ChestCounter", "state.json");
+        var demos = paths.Length > 0 ? paths[0] : Path.Combine(localAppData, "FortniteGame", "Saved", "Demos");
+        var stateFile = paths.Length > 1 ? paths[1] : Path.Combine(localAppData, "ChestCounter", "state.json");
+        using var instance = SingleInstance.TryClaim(showRunning: !background);
+        if (instance is null)
+        {
+            return 0;
+        }
 
         Application.SetHighDpiMode(HighDpiMode.PerMonitorV2);
         Application.EnableVisualStyles();
@@ -52,7 +66,10 @@ internal static class Program
             return 1;
         }
 
-        Application.Run(new MainForm(tracker, demos, Path.Combine(Path.GetDirectoryName(Path.GetFullPath(stateFile))!, "WebView2")));
+        StartWithFortnite.Refresh();
+        var window = new MainForm(tracker, demos, Path.Combine(Path.GetDirectoryName(Path.GetFullPath(stateFile))!, "WebView2"), background);
+        instance.OnShowRequested(window.ShowFromTray);
+        Application.Run(window);
         return 0;
     }
 

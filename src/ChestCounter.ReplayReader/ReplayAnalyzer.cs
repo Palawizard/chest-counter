@@ -35,6 +35,22 @@ public static class ReplayAnalyzer
     // this long was cut by a crash and will never be finished.
     internal static readonly TimeSpan CutAfter = TimeSpan.FromMinutes(10);
 
+    // The header alone tells a replay still being written (or cut) apart: no need to start a reader.
+    public static ReplayOutcome? Peek(string path)
+    {
+        try
+        {
+            using var stream = OpenShared(path);
+            return IsInProgress(stream)
+                ? new ReplayOutcome(DateTime.UtcNow - File.GetLastWriteTimeUtc(path) >= CutAfter ? ReplayStatus.Cut : ReplayStatus.InProgress)
+                : null;
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+        {
+            return new ReplayOutcome(ReplayStatus.InProgress);
+        }
+    }
+
     public static ReplayOutcome Analyze(string path)
     {
         try
