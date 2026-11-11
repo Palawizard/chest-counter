@@ -18,5 +18,5 @@ html, body { margin: 0; background: transparent; }
   paint-order: stroke fill;
 }
 .obs p { margin: 0; line-height: 1; }
-.label, .last { color: #fbecc8; font-size: 22px; }
+.label, .last { color: #fbecc8; font-size: 22px; font-family: "Segoe UI Variable Text", "Segoe UI", sans-serif; font-weight: 700; }
 .total { font-size: 64px; }

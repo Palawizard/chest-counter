@@ -52,7 +52,7 @@ const STRINGS = {
     overlayHint: "Le total et la partie d'avant par-dessus le jeu, en plein écran fenêtré. Ctrl+Maj+O le cache, Ctrl+Maj+L le déplace.",
     hotKeysTaken: "Un autre logiciel utilise déjà Ctrl+Maj+O ou Ctrl+Maj+L : l'overlay s'affiche, mais ces raccourcis ne marchent pas.",
     obs: "Page pour OBS",
-    obsHint: "Ajoute une source Navigateur dans OBS avec cette adresse. Elle ne marche que sur ce PC.",
+    obsHint: "Donne une adresse à ajouter comme source Navigateur dans OBS, sur ce PC uniquement.",
     obsFailed: "La page n'a pas pu démarrer : un autre logiciel utilise les ports 28470 à 28479.",
     copy: "Copier",
     copied: "Copiée",
@@ -108,7 +108,7 @@ const STRINGS = {
     overlayHint: "The total and the last match over the game, in windowed fullscreen. Ctrl+Shift+O hides it, Ctrl+Shift+L moves it.",
     hotKeysTaken: "Another app already uses Ctrl+Shift+O or Ctrl+Shift+L: the overlay shows, but these shortcuts do not work.",
     obs: "Page for OBS",
-    obsHint: "Add a Browser source in OBS with this address. It only works on this PC.",
+    obsHint: "Gives an address to add as a Browser source in OBS, on this PC only.",
     obsFailed: "The page could not start: another app uses ports 28470 to 28479.",
     copy: "Copy",
     copied: "Copied",
@@ -135,6 +135,8 @@ const shortDay = new Intl.DateTimeFormat(locale, { day: "numeric", month: "short
 const KIND_ORDER = ["normal", "rare", "buried", "relic", "poster"];
 
 const element = (id) => document.getElementById(id);
+// Live regions announce every write: write only what changed.
+const setText = (node, text) => { if (node.textContent !== text) node.textContent = text; };
 const games = element("games");
 const stamp = element("stamp");
 const medal = document.querySelector(".medal");
@@ -329,10 +331,10 @@ function paintSettings(settings) {
   element("obs").checked = settings.obs;
   element("start-with-fortnite").checked = settings.startWithFortnite;
   const overlayHint = element("overlay-hint");
-  overlayHint.textContent = settings.overlay && settings.hotKeysTaken ? t.hotKeysTaken : t.overlayHint;
+  setText(overlayHint, settings.overlay && settings.hotKeysTaken ? t.hotKeysTaken : t.overlayHint);
   overlayHint.dataset.tone = settings.overlay && settings.hotKeysTaken ? "error" : "normal";
   const obsHint = element("obs-hint");
-  obsHint.textContent = settings.obsFailed ? t.obsFailed : t.obsHint;
+  setText(obsHint, settings.obsFailed ? t.obsFailed : t.obsHint);
   obsHint.dataset.tone = settings.obsFailed ? "error" : "normal";
   element("obs-address").hidden = !settings.obsAddress;
   element("obs-url").textContent = settings.obsAddress ?? "";

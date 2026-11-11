@@ -25,9 +25,7 @@ internal sealed class OverlayWindow : Form
         BackColor = Ground;
         Opacity = 0.9;
         DoubleBuffered = true;
-        AutoScaleMode = AutoScaleMode.Dpi;
-        AutoScaleDimensions = new SizeF(96F, 96F);
-        ClientSize = new Size(230, 84);
+        ClientSize = Scaled(DeviceDpi);
         MouseDown += (_, e) =>
         {
             if (_moving && e.Button == MouseButtons.Left)
@@ -87,6 +85,12 @@ internal sealed class OverlayWindow : Form
         NativeMethods.SetClickThrough(Handle, !_moving);
     }
 
+    protected override void OnDpiChanged(DpiChangedEventArgs e)
+    {
+        base.OnDpiChanged(e);
+        ClientSize = Scaled(e.DeviceDpiNew);
+    }
+
     protected override void OnSizeChanged(EventArgs e)
     {
         base.OnSizeChanged(e);
@@ -118,6 +122,9 @@ internal sealed class OverlayWindow : Form
     }
 
     private int Scale(int pixels) => pixels * DeviceDpi / 96;
+
+    // Sized by hand: the fonts are in points and grow with the screen scale, the panel must follow.
+    private static Size Scaled(int dpi) => new(230 * dpi / 96, 84 * dpi / 96);
 
     private static GraphicsPath Rounded(Rectangle bounds, int radius)
     {
