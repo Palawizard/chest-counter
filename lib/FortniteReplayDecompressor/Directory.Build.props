@@ -1,0 +1,8 @@
+<Project>
+  <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))" />
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <!-- Third-party code kept close to upstream: its own warnings are not fixed here. -->
+    <NoWarn>$(NoWarn);CS8600;CS8601;CS8602;CS8603;CS8604;CS8618;CS8619;CS8620;CS8625;CS8629;CS8765;CS8767;CS0168;CS0219;CS1998;CS8714;CS8762;CS0162;CS0618</NoWarn>
+  </PropertyGroup>
+</Project>
