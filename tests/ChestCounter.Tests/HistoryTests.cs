@@ -30,6 +30,7 @@ public sealed class HistoryTests : IDisposable
         Assert.Equal(new LastMatch(27, 6.4, today.AddHours(14).AddMinutes(15)), current.Last);
         Assert.Equal(33, current.Last!.Total);
         Assert.Equal(33 + 12, current.Today);
+        Assert.Equal(2, current.TodayGames);
         Assert.Equal(33, current.Best);
     }
 
@@ -43,6 +44,7 @@ public sealed class HistoryTests : IDisposable
         tracker.Scan(Demos);
 
         Assert.Equal(20, tracker.Current.Today);
+        Assert.Equal(1, tracker.Current.TodayGames);
         Assert.Equal(41, tracker.Current.Best);
     }
 
@@ -77,6 +79,17 @@ public sealed class HistoryTests : IDisposable
         Assert.Equal(["id-b", "id-a"], lines.Select(line => line.PlayedAt == new DateTime(2026, 11, 9, 20, 0, 0) ? "id-b" : "id-a"));
         Assert.Equal(new Dictionary<string, int> { ["normal"] = 1, ["rare"] = 1, ["buried"] = 1, ["relic"] = 1, ["poster"] = 1 }, lines[1].Kinds);
         Assert.Empty(lines[0].Kinds);
+    }
+
+    [Fact]
+    public void Window_settings_are_kept()
+    {
+        var tracker = NewTracker();
+        Assert.Equal(new AppSettings(), tracker.Settings);
+
+        tracker.ChangeSettings(settings => settings with { Overlay = true, OverlayX = 1650, OverlayY = 40, Obs = true });
+
+        Assert.Equal(new AppSettings(true, 1650, 40, true), NewTracker().Settings);
     }
 
     [Fact]

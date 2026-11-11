@@ -5,7 +5,7 @@ namespace ChestCounter;
 
 // Games without a replay are almost always the oldest ones, so they are estimated from the
 // player's earliest counted matches (PerMissingGame, over BasisGames) rather than the overall average.
-public sealed record Summary(int GamesAnalyzed, int Chests, int InProgress, int Failed, int GamesWithoutReplay, double BrokenInMatches = 0, double BrokenPerGame = 0, double PerMissingGame = 0, int BasisGames = 0, int Cut = 0, LastMatch? Last = null, int Today = 0, int Best = 0)
+public sealed record Summary(int GamesAnalyzed, int Chests, int InProgress, int Failed, int GamesWithoutReplay, double BrokenInMatches = 0, double BrokenPerGame = 0, double PerMissingGame = 0, int BasisGames = 0, int Cut = 0, LastMatch? Last = null, int Today = 0, int Best = 0, int TodayGames = 0)
 {
     public double Average => GamesAnalyzed == 0 ? 0 : (double)Chests / GamesAnalyzed;
 
@@ -70,7 +70,7 @@ public sealed partial class ChestTracker
                 var (brokenInMatches, brokenPerGame) = BrokenEstimates();
                 var basis = Earliest(_matches.Values);
                 var perMissingGame = basis.Count == 0 ? 0 : basis.Average(m => m.Chests);
-                return new Summary(_matches.Count, _matches.Values.Sum(m => m.Chests), _inProgress, _failedThisRun.Count, _state.GamesWithoutReplay, brokenInMatches, brokenPerGame, perMissingGame, basis.Count, _cut, MatchHistory.Last(_matches.Values), MatchHistory.On(_matches.Values, DateTime.Now), MatchHistory.Best(_matches.Values));
+                return new Summary(_matches.Count, _matches.Values.Sum(m => m.Chests), _inProgress, _failedThisRun.Count, _state.GamesWithoutReplay, brokenInMatches, brokenPerGame, perMissingGame, basis.Count, _cut, MatchHistory.Last(_matches.Values), MatchHistory.On(_matches.Values, DateTime.Now), MatchHistory.Best(_matches.Values), MatchHistory.GamesOn(_matches.Values, DateTime.Now));
             }
         }
     }
@@ -95,6 +95,27 @@ public sealed partial class ChestTracker
             {
                 return _state.Notify;
             }
+        }
+    }
+
+    // A copy: changes go through ChangeSettings so they are saved.
+    public AppSettings Settings
+    {
+        get
+        {
+            lock (_gate)
+            {
+                return _state.Settings with { };
+            }
+        }
+    }
+
+    public void ChangeSettings(Func<AppSettings, AppSettings> change)
+    {
+        lock (_gate)
+        {
+            _state.Settings = change(_state.Settings);
+            Save();
         }
     }
 
@@ -349,6 +370,8 @@ public sealed partial class ChestTracker
         public UpdateNotice? Notice { get; set; }
 
         public bool Notify { get; set; } = true;
+
+        public AppSettings Settings { get; set; } = new();
     }
 }
 
@@ -366,3 +389,6 @@ public sealed class UpdateNotice
 
     public bool Dismissed { get; set; }
 }
+
+// Window and in-game options. TrayHintShown: the message saying the window went to the notification area was seen.
+public sealed record AppSettings(bool Overlay = false, int? OverlayX = null, int? OverlayY = null, bool Obs = false, bool TrayHintShown = false);

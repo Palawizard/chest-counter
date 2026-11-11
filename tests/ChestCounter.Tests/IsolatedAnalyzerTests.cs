@@ -27,6 +27,27 @@ public sealed class IsolatedAnalyzerTests
 
     [Fact]
     [Trait("Category", "RealReplay")]
+    public void Replay_still_being_written_is_answered_without_a_child()
+    {
+        var directory = Directory.CreateTempSubdirectory("chest-counter-test-").FullName;
+        try
+        {
+            var path = ReplayFixture.CopyTo(directory, "live.replay");
+            ReplayFixture.SetLive(path, true);
+
+            // The executable does not exist: starting a child would throw.
+            var outcome = IsolatedAnalyzer.Analyze(Path.Combine(directory, "missing.exe"), path);
+
+            Assert.Equal(ReplayStatus.InProgress, outcome.Status);
+        }
+        finally
+        {
+            Directory.Delete(directory, recursive: true);
+        }
+    }
+
+    [Fact]
+    [Trait("Category", "RealReplay")]
     public void Outcome_written_by_the_child_reads_back_unchanged()
     {
         var direct = ReplayAnalyzer.Analyze(ReplayFixture.Source);
