@@ -19,8 +19,10 @@ internal sealed class MainForm : Form
     private readonly WebView2 _view = new() { Dock = DockStyle.Fill };
     private readonly AppUpdater _updater = new();
     private ReplayFolderWatcher? _watcher;
+    private NotifyIcon? _notification;
     private volatile bool _scanning;
     private string? _error;
+    private int _completedScans;
 
     public MainForm(ChestTracker tracker, string demos, string webDataFolder)
     {
@@ -33,8 +35,8 @@ internal sealed class MainForm : Form
         AutoScaleMode = AutoScaleMode.Dpi;
         BackColor = WindowGround();
         _view.DefaultBackgroundColor = BackColor;
-        ClientSize = new Size(460, 560);
-        MinimumSize = SizeFromClientSize(new Size(380, 530));
+        ClientSize = new Size(460, 700);
+        MinimumSize = SizeFromClientSize(new Size(380, 640));
         MaximizeBox = false;
         StartPosition = FormStartPosition.CenterScreen;
         Controls.Add(_view);
@@ -97,6 +99,7 @@ internal sealed class MainForm : Form
     protected override void OnFormClosed(FormClosedEventArgs e)
     {
         _watcher?.Dispose();
+        _notification?.Dispose();
         base.OnFormClosed(e);
     }
 
@@ -133,6 +136,15 @@ internal sealed class MainForm : Form
                 case "setGamesWithoutReplay" when message.RootElement.GetProperty("value").TryGetInt32(out var games) && games is >= 0 and <= MaxGamesWithoutReplay:
                     _tracker.SetGamesWithoutReplay(games);
                     break;
+                case "dismissNotice":
+                    _tracker.DismissNotice();
+                    break;
+                case "setNotify":
+                    _tracker.SetNotify(message.RootElement.GetProperty("value").GetBoolean());
+                    break;
+                case "matches":
+                    PostMatches();
+                    return;
             }
         }
         catch (Exception exception) when (exception is JsonException or KeyNotFoundException or InvalidOperationException or IOException or UnauthorizedAccessException)
@@ -155,9 +167,59 @@ internal sealed class MainForm : Form
     {
         _scanning = true;
         _error = null;
+        var before = _tracker.Current.GamesAnalyzed;
         _tracker.Scan(_demos, RequestState, cancellation);
         _scanning = false;
+        var summary = _tracker.Current;
+        // The first scan reads what was played while the app was closed: only later matches are announced.
+        if (_completedScans++ > 0 && summary.GamesAnalyzed > before && summary.Last is { } last && _tracker.Notify && IsHandleCreated)
+        {
+            BeginInvoke(() => Announce(last, summary));
+        }
+
         RequestState();
+    }
+
+    private void Announce(LastMatch last, Summary summary)
+    {
+        if (IsDisposed)
+        {
+            return;
+        }
+
+        if (_notification is null)
+        {
+            _notification = new NotifyIcon { Icon = Icon, Text = Text };
+            _notification.BalloonTipClosed += (_, _) => _notification.Visible = false;
+            _notification.BalloonTipClicked += (_, _) =>
+            {
+                _notification.Visible = false;
+                WindowState = FormWindowState.Normal;
+                Activate();
+            };
+        }
+
+        var culture = System.Globalization.CultureInfo.GetCultureInfo(ChestCounter.Text.French ? "fr-FR" : "en-US");
+        _notification.Visible = true;
+        _notification.ShowBalloonTip(
+            5000,
+            ChestCounter.Text.Pick($"+{last.Chests.ToString("N0", culture)} {(last.Chests > 1 ? "coffres" : "coffre")}", $"+{last.Chests.ToString("N0", culture)} {(last.Chests == 1 ? "chest" : "chests")}"),
+            ChestCounter.Text.Pick($"Total estimé : {summary.Total.ToString("N0", culture)}", $"Estimated total: {summary.Total.ToString("N0", culture)}"),
+            ToolTipIcon.None);
+    }
+
+    private void PostMatches()
+    {
+        if (IsDisposed || _view.CoreWebView2 is null)
+        {
+            return;
+        }
+
+        _view.CoreWebView2.PostWebMessageAsJson(JsonSerializer.Serialize(new
+        {
+            matches = _tracker.Matches().Select(m => new { playedAt = m.PlayedAt, chests = m.Chests, broken = m.Broken, kinds = m.Kinds }),
+            notify = _tracker.Notify,
+        }));
     }
 
     private void ShowError(Exception exception)
@@ -196,6 +258,12 @@ internal sealed class MainForm : Form
             total = summary.Total,
             inProgress = summary.InProgress,
             failed = summary.Failed,
+            cut = summary.Cut,
+            restored = _tracker.RestoredFromBackup,
+            last = summary.Last is { } last ? new { chests = last.Chests, broken = last.Broken, endedAt = last.EndedAt } : null,
+            today = summary.Today,
+            best = summary.Best,
+            notice = _tracker.Notice is { } notice ? new { before = notice.ReadBefore, after = notice.ReadAfter, moved = notice.Moved } : null,
             scanning = _scanning,
             error = _error,
             update = _updater.ReadyVersion,

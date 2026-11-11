@@ -270,20 +270,6 @@ public sealed class ChestTrackerTests : IDisposable
     }
 
     [Fact]
-    public void Counted_match_whose_replay_is_gone_gets_the_measured_ratio_on_its_own_chests()
-    {
-        WriteOldState(new MatchRecord("id-old", "gone.replay", InSeason, Season, 20));
-        AddReplay("a.replay", "id-a", 10, brokenNearby: 5);
-
-        var tracker = NewTracker();
-        tracker.Scan(Demos);
-
-        Assert.Equal(2, tracker.Current.GamesAnalyzed);
-        Assert.Equal(30, tracker.Current.Chests);
-        Assert.Equal(5 + 10, tracker.Current.EstimatedBroken);
-    }
-
-    [Fact]
     public void Records_from_the_previous_method_are_recalculated_once()
     {
         WriteOldState(new MatchRecord("id-a", "a.replay", InSeason, Season, 10, 4));
@@ -352,6 +338,21 @@ public sealed class ChestTrackerTests : IDisposable
     }
 
     [Fact]
+    public void Chest_class_read_without_a_declared_type_is_logged_once()
+    {
+        var tracker = NewTracker();
+        AddReplay("a.replay", "id-a", 10);
+        AddReplay("b.replay", "id-b", 12);
+        _outcomes["a.replay"] = _outcomes["a.replay"] with { NewChestClasses = ["Tiered_Chest_5_Child_C"] };
+        _outcomes["b.replay"] = _outcomes["b.replay"] with { NewChestClasses = ["Tiered_Chest_5_Child_C"] };
+
+        tracker.Scan(Demos);
+
+        var log = File.ReadAllLines(Path.ChangeExtension(StateFile, ".errors.log"));
+        Assert.Single(log, line => line.EndsWith("chest class read without a declared type: Tiered_Chest_5_Child_C"));
+    }
+
+    [Fact]
     public void Corrupted_state_is_refused_and_left_untouched()
     {
         Directory.CreateDirectory(Path.GetDirectoryName(StateFile)!);
@@ -371,7 +372,7 @@ public sealed class ChestTrackerTests : IDisposable
     private void AddReplay(string fileName, string id, int chests, string branch = Season, DateTime? playedAt = null, double brokenNearby = 0)
     {
         File.WriteAllBytes(Path.Combine(Demos, fileName), []);
-        _outcomes[fileName] = new ReplayOutcome(ReplayStatus.Analyzed, new MatchRecord(id, fileName, playedAt ?? InSeason, branch, chests, brokenNearby, MatchRecord.CurrentBrokenMethod));
+        _outcomes[fileName] = new ReplayOutcome(ReplayStatus.Analyzed, new MatchRecord(id, fileName, playedAt ?? InSeason, branch, chests, brokenNearby, MatchRecord.CurrentMethod));
     }
 
     private void WriteOldState(params MatchRecord[] matches)

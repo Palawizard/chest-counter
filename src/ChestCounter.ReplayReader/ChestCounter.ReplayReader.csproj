@@ -7,6 +7,6 @@
     <InternalsVisibleTo Include="ChestCounter.Tests" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="FortniteReplayReader" Version="3.1.0" />
+    <ProjectReference Include="../../lib/FortniteReplayDecompressor/src/FortniteReplayReader/FortniteReplayReader.csproj" />
   </ItemGroup>
 </Project>

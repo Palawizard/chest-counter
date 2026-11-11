@@ -44,3 +44,10 @@ public sealed class SpritePosterChest : SearchableChest;
 
 [NetFieldExportGroup("/SpritePosters/Blueprints/Items/Booty/B_SpritePosters_Booty_Chest_Variant1.B_SpritePosters_Booty_Chest_Variant1_C", ParseMode.Normal)]
 public sealed class SpritePosterChestVariant1 : SearchableChest;
+
+// Not a game path: the type every other chest class is read as (see ChestClasses).
+[NetFieldExportGroup(Path, ParseMode.Normal)]
+public sealed class GenericChest : SearchableChest
+{
+    public const string Path = "ChestCounter.GenericChest";
+}

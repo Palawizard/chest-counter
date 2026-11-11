@@ -28,6 +28,8 @@ It reads the replay files Fortnite saves after each match, finds every chest you
 - Fortnite only keeps about 100 replays. Chest Counter saves every match it reads, so a deleted replay stays counted.
 - No account or login, and no Epic or tracker API. Your replays stay on your PC.
 - The window has a single field to fill in once, and nothing moves while you play.
+- Your last match, today's chests and your best match sit under the total, and every counted match is listed with its chests by type.
+- A Windows notification can tell you how many chests each match added.
 - French or English, depending on your Windows language.
 - New versions install themselves from GitHub releases.
 
@@ -62,16 +64,22 @@ The big number is the estimated total. The line under it, Read from replays, cou
 
 If you played matches before installing Chest Counter, or Fortnite already deleted their replays, enter how many in **Matches without a replay**. Those are almost always your oldest matches, played before you got better at finding chests, so they are estimated from your first 20 counted matches.
 
+**Last match** shows the chests you opened in your latest match, when it ended, today's chests and your best match. **See all matches** lists every counted match with its chests by type. The notification at the end of each match can be turned off at the bottom of that list.
+
+### Updating from 2.2 or earlier
+
+Version 2.3 counts more accurately. Before, a chest you opened, left and saw again later was often counted a second time, so **Read from replays** goes down after the update. Your replays still on the PC are read again once. Matches counted by an older version whose replay is gone cannot be read again: they move to **Matches without a replay** and are estimated. The window shows the numbers before and after, once.
+
 ## What is counted
 
-Every opening of a chest by you: regular, rare, buried, relic and wanted poster chests. A chest that refills and is opened again counts again. Ammo boxes and coolers are not counted.
+Every opening of a chest by you: regular, rare, buried, relic and wanted poster chests, and chest types added by game updates. A chest that refills and is opened again counts again; a chest you only see again does not. Ammo boxes, coolers and loot cannons are not counted.
 
 ## Limits
 
 - Fortnite keeps about 100 replays. A match whose replay is deleted before the app reads it can only be estimated, so open Chest Counter at least once every 100 matches.
 - Replays do not say who broke a chest. A chest destroyed while it still held loot counts for you when you were the closest player, within 10 m, of the loot it dropped. Your recorded position does not follow a vehicle, so a chest destroyed while you are driving counts for 0.7. This part is always shown as estimated.
 - Relic finder chests cannot be attributed and are not counted.
-- A chest type added by a game update is ignored until the app is updated.
+- A match cut short by a crash leaves an unfinished replay. It is shown apart and cannot be counted; a match you quit from the menu is counted normally.
 - All game modes found in the replay folder are counted.
 
 ## Privacy
@@ -106,6 +114,6 @@ The output is in `dist\releases`. Add `-Upload` to publish it as a draft GitHub 
 
 ## License
 
-[GPL-3.0](LICENSE). Replays are read with [FortniteReplayDecompressor](https://github.com/Shiqan/FortniteReplayDecompressor) (MIT). The figures use [Lilita One](https://github.com/google/fonts/tree/main/ofl/lilitaone) under the SIL Open Font License.
+[GPL-3.0](LICENSE). Replays are read with a copy of [FortniteReplayDecompressor](https://github.com/Shiqan/FortniteReplayDecompressor) by Shiqan (MIT), kept in `lib/` with a few fixes listed in its README. Its Kraken decompressor is a port of [ooz](https://github.com/powzix/ooz) by Powzix, under GPL-3.0-or-later. The figures use [Lilita One](https://github.com/google/fonts/tree/main/ofl/lilitaone) under the SIL Open Font License.
 
 Chest Counter is not affiliated with or endorsed by Epic Games. Fortnite is a trademark of Epic Games, Inc.
