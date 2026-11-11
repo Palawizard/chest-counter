@@ -223,7 +223,7 @@ internal sealed class OwnerChestReader : FortniteReplayReader.ReplayReader
                 var key = KeyOf(channelIndex, actor);
                 if (chest is GenericChest)
                 {
-                    _genericClasses.Add(ChestClasses.ClassOf(key));
+                    _genericClasses.Add(ClassOfKey(key));
                 }
 
                 Track(key, channelIndex, _worldTime, chest);
