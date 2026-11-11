@@ -352,6 +352,21 @@ public sealed class ChestTrackerTests : IDisposable
     }
 
     [Fact]
+    public void Chest_class_read_without_a_declared_type_is_logged_once()
+    {
+        var tracker = NewTracker();
+        AddReplay("a.replay", "id-a", 10);
+        AddReplay("b.replay", "id-b", 12);
+        _outcomes["a.replay"] = _outcomes["a.replay"] with { NewChestClasses = ["Tiered_Chest_5_Child_C"] };
+        _outcomes["b.replay"] = _outcomes["b.replay"] with { NewChestClasses = ["Tiered_Chest_5_Child_C"] };
+
+        tracker.Scan(Demos);
+
+        var log = File.ReadAllLines(Path.ChangeExtension(StateFile, ".errors.log"));
+        Assert.Single(log, line => line.EndsWith("chest class read without a declared type: Tiered_Chest_5_Child_C"));
+    }
+
+    [Fact]
     public void Corrupted_state_is_refused_and_left_untouched()
     {
         Directory.CreateDirectory(Path.GetDirectoryName(StateFile)!);

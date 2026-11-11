@@ -243,7 +243,40 @@ public class NetFieldParser
     /// </summary>
     /// <param name="group"></param>
     /// <returns>true if group should be parsed further, false otherwise</returns>
-    public bool WillReadType(string group) => NetFieldGroups.TryGetValue(group, out var _);
+    public bool WillReadType(string group) => NetFieldGroups.TryGetValue(Resolve(group), out var _);
+
+    /// <summary>
+    /// Picks a declared group path for a group that has no type of its own, or returns null.
+    /// Lets an application read classes it recognises by name, such as new chest blueprints.
+    /// </summary>
+    public Func<NetFieldExportGroup, string?>? GroupAlias { get; set; }
+
+    private readonly Dictionary<string, string?> _aliases = new();
+
+    private string Resolve(string group)
+    {
+        if (GroupAlias is null || NetFieldGroups.TryGetValue(group, out _))
+        {
+            return group;
+        }
+
+        if (!_aliases.TryGetValue(group, out var alias) && GuidCache.NetFieldExportGroupMap.TryGetValue(group, out var exportGroup))
+        {
+            alias = GroupAlias(exportGroup);
+            if (alias is not null && !NetFieldGroups.TryGetValue(alias, out _))
+            {
+                alias = null;
+            }
+
+            // Field names arrive over time: a refusal is only final once every field is known.
+            if (alias is not null || Array.TrueForAll(exportGroup.NetFieldExports, field => field is not null))
+            {
+                _aliases[group] = alias;
+            }
+        }
+
+        return alias ?? group;
+    }
 
     /// <summary>
     /// Returns whether or not this <paramref name="group"/> is marked to be parsed.
@@ -284,7 +317,7 @@ public class NetFieldParser
 
         if (exportGroup.GroupId == -1)
         {
-            if (!NetFieldGroups.TryGetIndex(exportGroup.PathName, out var groupIndex))
+            if (!NetFieldGroups.TryGetIndex(Resolve(exportGroup.PathName), out var groupIndex))
             {
                 exportGroup.GroupId = -2;
                 return false;
@@ -577,7 +610,7 @@ public class NetFieldParser
     /// <returns></returns>
     public INetFieldExportGroup? CreateType(string group)
     {
-        if (!NetFieldGroups.TryGetValue(group, out var exportGroup))
+        if (!NetFieldGroups.TryGetValue(Resolve(group), out var exportGroup))
         {
             return null;
         }

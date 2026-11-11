@@ -29,6 +29,7 @@ public sealed partial class ChestTracker
     private readonly State _state;
     private readonly Dictionary<string, MatchRecord> _matches;
     private readonly HashSet<string> _failedThisRun = [];
+    private readonly HashSet<string> _loggedChestClasses = [];
     private readonly HashSet<string> _needReanalysis;
     private int _inProgress;
 
@@ -97,11 +98,18 @@ public sealed partial class ChestTracker
                 else if (outcome.Status == ReplayStatus.Failed)
                 {
                     _failedThisRun.Add(fileName);
-                    File.AppendAllText(Path.ChangeExtension(_stateFile, ".errors.log"), $"{DateTime.Now:s} {fileName} {outcome.Error}{Environment.NewLine}");
+                    Log($"{fileName} {outcome.Error}");
                 }
                 else
                 {
                     Record(fileName, outcome.Match!);
+                    foreach (var chestClass in outcome.NewChestClasses ?? [])
+                    {
+                        if (_loggedChestClasses.Add(chestClass))
+                        {
+                            Log($"{fileName} chest class read without a declared type: {chestClass}");
+                        }
+                    }
                 }
             }
 
@@ -160,6 +168,9 @@ public sealed partial class ChestTracker
         var basis = Earliest(known);
         return (broken + perOpened * withoutData, basis.Sum(m => m.BrokenNearby!.Value) / basis.Count);
     }
+
+    private void Log(string line) =>
+        File.AppendAllText(Path.ChangeExtension(_stateFile, ".errors.log"), $"{DateTime.Now:s} {line}{Environment.NewLine}");
 
     // Written through a temporary file so a crash cannot leave a truncated state behind.
     private void Save()
