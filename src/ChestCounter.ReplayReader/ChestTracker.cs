@@ -38,12 +38,22 @@ public sealed partial class ChestTracker
         Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(stateFile))!);
         _stateFile = stateFile;
         _analyze = analyze;
-        _state = File.Exists(stateFile)
-            ? JsonSerializer.Deserialize<State>(File.ReadAllText(stateFile)) ?? throw new InvalidDataException("empty state file")
-            : new State();
+        _state = Load();
+        if (_state.Matches.Any(m => m.Method < MatchRecord.CurrentMethod) && File.Exists(stateFile) && !File.Exists(BeforeMigrationFile))
+        {
+            File.Copy(stateFile, BeforeMigrationFile);
+        }
+
         _matches = _state.Matches.ToDictionary(m => m.Id);
         _needReanalysis = _state.Matches.Where(m => m.Method < MatchRecord.CurrentMethod).Select(m => m.FileName).ToHashSet();
     }
+
+    // True when the saved results were missing or unreadable and came back from the backup copy.
+    public bool RestoredFromBackup { get; private set; }
+
+    private string BackupFile => Path.ChangeExtension(_stateFile, ".backup.json");
+
+    private string BeforeMigrationFile => Path.ChangeExtension(_stateFile, ".2.2.json");
 
     public Summary Current
     {
@@ -207,12 +217,48 @@ public sealed partial class ChestTracker
     private void Log(string line) =>
         File.AppendAllText(Path.ChangeExtension(_stateFile, ".errors.log"), $"{DateTime.Now:s} {line}{Environment.NewLine}");
 
-    // Written through a temporary file so a crash cannot leave a truncated state behind.
+    // An unreadable file is set aside, never deleted. Without a backup it is refused as before, so
+    // the player's data is left as it was.
+    private State Load()
+    {
+        try
+        {
+            if (File.Exists(_stateFile))
+            {
+                return Read(_stateFile);
+            }
+        }
+        catch (Exception e) when (e is JsonException or InvalidDataException)
+        {
+            if (!File.Exists(BackupFile))
+            {
+                throw;
+            }
+
+            File.Move(_stateFile, $"{_stateFile}.unreadable-{DateTime.Now:yyyyMMdd-HHmmss}");
+        }
+
+        if (!File.Exists(BackupFile))
+        {
+            return new State();
+        }
+
+        File.Copy(BackupFile, _stateFile, overwrite: true);
+        RestoredFromBackup = true;
+        return Read(_stateFile);
+    }
+
+    private static State Read(string file) =>
+        JsonSerializer.Deserialize<State>(File.ReadAllText(file)) ?? throw new InvalidDataException("empty state file");
+
+    // Written through a temporary file so a crash cannot leave a truncated state behind, then copied
+    // as the backup for when the file is deleted or damaged from outside.
     private void Save()
     {
         var temporary = _stateFile + ".tmp";
         File.WriteAllText(temporary, JsonSerializer.Serialize(_state));
         File.Move(temporary, _stateFile, overwrite: true);
+        File.Copy(_stateFile, BackupFile, overwrite: true);
     }
 
     [GeneratedRegex(@"Release-43\.")]
