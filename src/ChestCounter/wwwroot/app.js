@@ -36,6 +36,7 @@ const STRINGS = {
     loading: "Chargement.",
     cut: (n) => (n === "1" ? "1 partie interrompue, non comptée." : `${n} parties interrompues, non comptées.`),
     restored: "Tes résultats ont été restaurés depuis la sauvegarde.",
+    totalAverage: (n) => `Environ ${n} par partie`,
     lastMatch: "Partie d'avant",
     lastDetail: (when, broken) => `Finie ${when}${broken === "0" ? "" : `, environ ${broken} ${frPlural(broken, "cassé")} sans être ${frPlural(broken, "ouvert")}`}.`,
     at: (time) => `à ${time}`,
@@ -79,6 +80,7 @@ const STRINGS = {
     loading: "Loading.",
     cut: (n) => (n === "1" ? "1 match cut short, not counted." : `${n} matches cut short, not counted.`),
     restored: "Your results were restored from the backup.",
+    totalAverage: (n) => `About ${n} per match`,
     lastMatch: "Last match",
     lastDetail: (when, broken) => `Ended ${when}${broken === "0" ? "" : `, about ${broken} broken unopened`}.`,
     at: (time) => `at ${time}`,
@@ -213,6 +215,9 @@ function render(state) {
     state.gamesWithoutReplay > 0 && state.basisGames > 0 ? whole.format(state.basisGames) : null,
     brokenPerMatch(state));
 
+  const allGames = state.gamesAnalyzed + state.gamesWithoutReplay;
+  element("total-average").hidden = unread || allGames === 0;
+  element("total-average").textContent = allGames === 0 ? "" : t.totalAverage(oneDecimal.format(Math.round(state.total) / allGames));
   paintLast(state, unread);
   paintStamp(state);
   paintStatus(state);
