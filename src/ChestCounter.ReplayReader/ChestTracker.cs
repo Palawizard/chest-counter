@@ -42,7 +42,7 @@ public sealed partial class ChestTracker
             ? JsonSerializer.Deserialize<State>(File.ReadAllText(stateFile)) ?? throw new InvalidDataException("empty state file")
             : new State();
         _matches = _state.Matches.ToDictionary(m => m.Id);
-        _needReanalysis = _state.Matches.Where(m => m.BrokenMethod < MatchRecord.CurrentBrokenMethod).Select(m => m.FileName).ToHashSet();
+        _needReanalysis = _state.Matches.Where(m => m.Method < MatchRecord.CurrentMethod).Select(m => m.FileName).ToHashSet();
     }
 
     public Summary Current
@@ -72,6 +72,7 @@ public sealed partial class ChestTracker
     public void Scan(string demosDirectory, Action? progress = null, CancellationToken cancellation = default)
     {
         var inProgress = 0;
+        var present = new HashSet<string>();
         foreach (var path in Directory.EnumerateFiles(demosDirectory, "*.replay", SearchOption.TopDirectoryOnly).Order())
         {
             if (cancellation.IsCancellationRequested)
@@ -80,6 +81,7 @@ public sealed partial class ChestTracker
             }
 
             var fileName = Path.GetFileName(path);
+            present.Add(fileName);
             lock (_gate)
             {
                 if ((_state.Processed.Contains(fileName) && !_needReanalysis.Contains(fileName)) || _failedThisRun.Contains(fileName))
@@ -119,6 +121,10 @@ public sealed partial class ChestTracker
         lock (_gate)
         {
             _inProgress = inProgress;
+            if (present.Count > 0)
+            {
+                RetireOldMatchesWithoutReplay(present);
+            }
         }
 
         progress?.Invoke();
@@ -127,11 +133,40 @@ public sealed partial class ChestTracker
     internal static bool IsInSeason(string branch, DateTime playedAt) =>
         playedAt.Date >= SeasonStart || SeasonBranch().IsMatch(branch);
 
+    // A match counted by an older analysis whose replay is gone cannot be corrected: it becomes a
+    // match without a replay, estimated like the others. This only follows a full read of a folder
+    // that still has replays, so an emptied or moved folder never retires anything.
+    private void RetireOldMatchesWithoutReplay(IReadOnlySet<string> present)
+    {
+        var old = _state.Matches.Where(m => m.Method < MatchRecord.CurrentMethod && !present.Contains(m.FileName)).ToList();
+        if (old.Count == 0)
+        {
+            return;
+        }
+
+        foreach (var match in old)
+        {
+            _state.Matches.Remove(match);
+            _matches.Remove(match.Id);
+            _state.Processed.Remove(match.FileName);
+            _needReanalysis.Remove(match.FileName);
+            _state.Retired.Add(match.Id);
+        }
+
+        _state.GamesWithoutReplay += old.Count;
+        Save();
+    }
+
     private void Record(string fileName, MatchRecord match)
     {
+        if (_state.Retired.Remove(match.Id))
+        {
+            _state.GamesWithoutReplay = Math.Max(0, _state.GamesWithoutReplay - 1);
+        }
+
         if (_matches.TryGetValue(match.Id, out var known))
         {
-            if (known.BrokenMethod < MatchRecord.CurrentBrokenMethod)
+            if (known.Method < MatchRecord.CurrentMethod)
             {
                 _state.Matches[_state.Matches.IndexOf(known)] = match;
                 _matches[match.Id] = match;
@@ -190,5 +225,8 @@ public sealed partial class ChestTracker
         public HashSet<string> Processed { get; set; } = [];
 
         public int GamesWithoutReplay { get; set; }
+
+        // Matches moved to GamesWithoutReplay; one whose replay comes back is read again and moved back.
+        public HashSet<string> Retired { get; set; } = [];
     }
 }

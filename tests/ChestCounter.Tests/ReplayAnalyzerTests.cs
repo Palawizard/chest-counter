@@ -24,7 +24,7 @@ public sealed class ReplayAnalyzerTests : IDisposable
         // 2.2.2 counted 20 because 9 chests came back into view.
         Assert.Equal(11, outcome.Match.Chests);
         Assert.InRange(outcome.Match.BrokenNearby!.Value, 0, 60);
-        Assert.Equal(MatchRecord.CurrentBrokenMethod, outcome.Match.BrokenMethod);
+        Assert.Equal(MatchRecord.CurrentMethod, outcome.Match.Method);
     }
 
     [Fact]

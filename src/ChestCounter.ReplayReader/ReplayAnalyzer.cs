@@ -11,10 +11,12 @@ namespace ChestCounter;
 
 public enum ReplayStatus { InProgress, Failed, Analyzed }
 
-// Openings keeps each counted chest so a later version can correct a match whose replay Fortnite deleted.
-public sealed record MatchRecord(string Id, string FileName, DateTime PlayedAt, string Branch, int Chests, double? BrokenNearby = null, int BrokenMethod = 0, IReadOnlyList<ChestOpening>? Openings = null)
+// Method is the analysis that produced the record: older records are read again while their replay
+// exists. Openings keeps each counted chest so a later version can correct a match whose replay is gone.
+public sealed record MatchRecord(string Id, string FileName, DateTime PlayedAt, string Branch, int Chests, double? BrokenNearby = null, int Method = 0, IReadOnlyList<ChestOpening>? Openings = null)
 {
-    public const int CurrentBrokenMethod = 2;
+    // 3: chests counted once when they come back into view (2.3). 2.2 wrote "BrokenMethod" instead.
+    public const int CurrentMethod = 3;
 }
 
 // Short names keep state.json small: about 50 bytes per chest.
@@ -48,7 +50,7 @@ public static class ReplayAnalyzer
 
             using var drivingStream = OpenShared(path);
             var driving = new OwnerDrivingReader().ReadOwnerDrivingTimes(drivingStream);
-            var match = new MatchRecord(replay.Header.Guid, Path.GetFileName(path), replay.Info.Timestamp, replay.Header.Branch, reader.CountOpenings(recorder), reader.EstimateBroken(recorder, driving), MatchRecord.CurrentBrokenMethod, reader.OpeningsBy(recorder));
+            var match = new MatchRecord(replay.Header.Guid, Path.GetFileName(path), replay.Info.Timestamp, replay.Header.Branch, reader.CountOpenings(recorder), reader.EstimateBroken(recorder, driving), MatchRecord.CurrentMethod, reader.OpeningsBy(recorder));
             return new ReplayOutcome(ReplayStatus.Analyzed, match, NewChestClasses: reader.GenericClasses.Order().ToList());
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException)
