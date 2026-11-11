@@ -12,6 +12,12 @@ internal static class Program
             .OnAfterUpdateFastCallback(_ => AfterInstallOrUpdate())
             .Run();
 
+        if (args is [IsolatedAnalyzer.Argument, var replay])
+        {
+            IsolatedAnalyzer.Run(replay, Console.Out);
+            return 0;
+        }
+
         var localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
         var demos = args.Length > 0 ? args[0] : Path.Combine(localAppData, "FortniteGame", "Saved", "Demos");
         var stateFile = args.Length > 1 ? args[1] : Path.Combine(localAppData, "ChestCounter", "state.json");
@@ -33,7 +39,8 @@ internal static class Program
         ChestTracker tracker;
         try
         {
-            tracker = new ChestTracker(stateFile, ReplayAnalyzer.Analyze);
+            var self = Environment.ProcessPath!;
+            tracker = new ChestTracker(stateFile, replay => IsolatedAnalyzer.Analyze(self, replay));
         }
         catch (Exception e) when (e is System.Text.Json.JsonException or InvalidDataException or IOException)
         {
