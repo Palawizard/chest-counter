@@ -30,6 +30,8 @@ It reads the replay files Fortnite saves after each match, finds every chest you
 - The window has a single field to fill in once, and nothing moves while you play.
 - Your last match, today's chests and your best match sit under the total, and every counted match is listed with its chests by type.
 - A Windows notification can tell you how many chests each match added.
+- An optional overlay shows the total and your last match over the game, and an optional page shows them in OBS.
+- It can open with Fortnite and stay by the clock, so you never have to start it yourself.
 - French or English, depending on your Windows language.
 - New versions install themselves from GitHub releases.
 
@@ -54,7 +56,7 @@ Requires Windows 10 or 11 (64-bit) and the Microsoft Edge WebView2 runtime, whic
 
 Updates download in the background. A new version is applied the next time you open the app, or right away with the **Restart** button that appears at the bottom of the window.
 
-Uninstall from **Settings > Apps**. Your counted matches are kept in `%LOCALAPPDATA%\ChestCounter` and survive an uninstall or reinstall.
+Uninstall from **Settings > Apps**. Uninstalling also removes the **Open with Fortnite** startup entry. Your counted matches are kept in `%LOCALAPPDATA%\ChestCounter` and survive an uninstall or reinstall.
 
 ## Usage
 
@@ -64,7 +66,18 @@ The big number is the estimated total. The line under it, Read from replays, cou
 
 If you played matches before installing Chest Counter, or Fortnite already deleted their replays, enter how many in **Matches without a replay**. Those are almost always your oldest matches, played before you got better at finding chests, so they are estimated from your first 20 counted matches.
 
-**Last match** shows your latest match: the chests you opened plus the ones you broke, estimated, when it ended, today's chests and your best match. **See all matches** lists every counted match with the same total and its opened chests by type. Under the big number, the average per match is the estimated total divided by all your matches. The notification at the end of each match can be turned off at the bottom of that list.
+**Last match** shows your latest match: the chests you opened plus the ones you broke, estimated, when it ended, today's chests and your best match. **See all matches** lists every counted match with the same total and its opened chests by type. Under the big number, the average per match is the estimated total divided by all your matches. Today's line also gives your average per match for the day.
+
+### Settings
+
+The button at the top right opens the settings:
+
+- **Notify me when each match ends**: a Windows notification with the match's chests.
+- **Overlay while Fortnite runs**: the total and your last match over the game. It only shows while Fortnite runs, in windowed fullscreen (an overlay cannot draw over exclusive fullscreen). **Ctrl+Shift+O** hides or shows it, **Ctrl+Shift+L** lets you drag it somewhere else, then locks it again. Clicks go through it to the game.
+- **Page for OBS**: shows an address such as `http://127.0.0.1:28470/`. Add a Browser source in OBS with it. The page is transparent and updates every few seconds.
+- **Open with Fortnite**: a small process starts with Windows, waits quietly and opens Chest Counter in the notification area when Fortnite starts.
+
+Closing the window keeps Chest Counter running by the clock, so the overlay, the OBS page and the notifications keep working. To quit, right-click the icon by the clock and choose **Quit**.
 
 ### Updating from 2.2 or earlier
 
@@ -84,7 +97,7 @@ Every opening of a chest by you: regular, rare, buried, relic and wanted poster 
 
 ## Privacy
 
-Chest Counter only reads your replay folder (`%LOCALAPPDATA%\FortniteGame\Saved\Demos`) and never modifies it. The app itself only goes online to check this repository's GitHub releases for updates.
+Chest Counter only reads your replay folder (`%LOCALAPPDATA%\FortniteGame\Saved\Demos`) and never modifies it. The app itself only goes online to check this repository's GitHub releases for updates. The OBS page, when you turn it on, is only reachable from your own PC (`127.0.0.1`). **Open with Fortnite** adds a startup entry for your Windows user only, without administrator rights.
 
 ## Build from source
 
