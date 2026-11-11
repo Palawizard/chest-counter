@@ -36,6 +36,7 @@ It reads the replay files Fortnite saves after each match, finds every chest you
 | | Chest Counter | Similar apps | Manual counters | In-game counter |
 |---|---|---|---|---|
 | Counts on its own | Yes | Yes | No, you press +1 after each chest | Yes |
+| Counts the chests you break | Yes, estimated on a separate line | Yes, for most of them | Only if you press +1 for them too | No, only the chests you open |
 | Keeps counting past 1,000 chests | Yes | Yes | Yes | No, players report it stops at the 1,000-chest stage |
 | Makes up for matches whose replay is gone | Yes, estimated on a separate line | No, for most of them | No | Yes, it counts every match |
 
