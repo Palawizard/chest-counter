@@ -41,7 +41,7 @@ const STRINGS = {
     lastDetail: (when, opened, broken) => `Finie ${when}. ${opened} ${frPlural(opened, "ouvert")}${broken === "0" ? "" : ` et environ ${broken} ${frPlural(broken, "cassé")} sans être ${frPlural(broken, "ouvert")}`}.`,
     at: (time) => `à ${time}`,
     onDay: (day, time) => `le ${day} à ${time}`,
-    lastDay: (today, best) => `Aujourd'hui : ${today} · Meilleure partie : ${best}`,
+    lastDay: (today, games, average, best) => `Aujourd'hui : ${today}${games === "0" ? "" : ` en ${games} ${frPlural(games, "partie")}, ${average} par partie`} · Meilleure partie : ${best}`,
     openMatches: "Voir les parties",
     back: "Retour",
     matchesTitle: "Parties",
@@ -85,7 +85,7 @@ const STRINGS = {
     lastDetail: (when, opened, broken) => `Ended ${when}. ${opened} opened${broken === "0" ? "" : ` and about ${broken} broken unopened`}.`,
     at: (time) => `at ${time}`,
     onDay: (day, time) => `on ${day} at ${time}`,
-    lastDay: (today, best) => `Today: ${today} · Best match: ${best}`,
+    lastDay: (today, games, average, best) => `Today: ${today}${games === "0" ? "" : ` in ${games} ${games === "1" ? "match" : "matches"}, ${average} per match`} · Best match: ${best}`,
     openMatches: "See all matches",
     back: "Back",
     matchesTitle: "Matches",
@@ -263,7 +263,8 @@ function paintLast(state, unread) {
 
   element("last-chests").textContent = whole.format(Math.round(last.chests + last.broken));
   element("last-detail").textContent = t.lastDetail(ended(new Date(last.endedAt)), whole.format(last.chests), whole.format(Math.round(last.broken)));
-  element("last-day").textContent = t.lastDay(whole.format(state.today), whole.format(state.best));
+  const todayAverage = state.todayGames === 0 ? "" : oneDecimal.format(state.today / state.todayGames);
+  element("last-day").textContent = t.lastDay(whole.format(state.today), whole.format(state.todayGames), todayAverage, whole.format(state.best));
 }
 
 function kindsText(kinds) {

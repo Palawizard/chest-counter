@@ -262,6 +262,7 @@ internal sealed class MainForm : Form
             restored = _tracker.RestoredFromBackup,
             last = summary.Last is { } last ? new { chests = last.Chests, broken = last.Broken, endedAt = last.EndedAt } : null,
             today = summary.Today,
+            todayGames = summary.TodayGames,
             best = summary.Best,
             notice = _tracker.Notice is { } notice ? new { before = notice.ReadBefore, after = notice.ReadAfter, moved = notice.Moved } : null,
             scanning = _scanning,
