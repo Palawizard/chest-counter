@@ -8,7 +8,7 @@
   <link rel="stylesheet" href="app.css">
 </head>
 <body>
-  <header class="top"><img class="mark" src="icon.svg" alt="" width="26" height="26"><span class="name" data-t="appName"></span></header>
+  <header class="top"><img class="mark" src="icon.svg" alt="" width="26" height="26"><span class="name" data-t="appName"></span><button type="button" class="open-settings" id="open-settings" data-t-label="settingsTitle"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 4h12M2 8h12M2 12h12"/><circle cx="5.5" cy="4" r="1.6"/><circle cx="10.5" cy="8" r="1.6"/><circle cx="6.5" cy="12" r="1.6"/></svg></button></header>
   <main class="page">
     <div class="view" id="home">
       <section class="balance" aria-labelledby="total-label">
@@ -59,7 +59,30 @@
       </div>
       <ol class="match-list" id="match-list"></ol>
       <p class="hint" id="matches-empty" data-t="noGames" hidden></p>
-      <label class="check"><input type="checkbox" id="notify"><span data-t="notify"></span></label>
+    </section>
+
+    <section class="view settings" id="settings" aria-labelledby="settings-title" hidden>
+      <div class="matches-head">
+        <button type="button" class="back" id="settings-back"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3 5 8l5 5"/></svg><span data-t="back"></span></button>
+        <h1 id="settings-title" data-t="settingsTitle"></h1>
+      </div>
+      <div class="option">
+        <label class="check"><input type="checkbox" id="notify" aria-describedby="notify-hint"><span data-t="notify"></span></label>
+        <p class="hint" id="notify-hint" data-t="notifyHint"></p>
+      </div>
+      <div class="option">
+        <label class="check"><input type="checkbox" id="overlay" aria-describedby="overlay-hint"><span data-t="overlay"></span></label>
+        <p class="hint" id="overlay-hint"></p>
+      </div>
+      <div class="option">
+        <label class="check"><input type="checkbox" id="obs" aria-describedby="obs-hint"><span data-t="obs"></span></label>
+        <p class="hint" id="obs-hint"></p>
+        <div class="obs-address" id="obs-address" hidden><code id="obs-url"></code><button type="button" id="copy-obs" data-t="copy"></button></div>
+      </div>
+      <div class="option">
+        <label class="check"><input type="checkbox" id="start-with-fortnite" aria-describedby="start-hint"><span data-t="startWithFortnite"></span></label>
+        <p class="hint" id="start-hint" data-t="startHint"></p>
+      </div>
     </section>
 
     <footer class="foot">

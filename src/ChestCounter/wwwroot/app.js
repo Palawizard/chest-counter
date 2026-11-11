@@ -46,6 +46,18 @@ const STRINGS = {
     back: "Retour",
     matchesTitle: "Parties",
     notify: "Me prévenir à la fin de chaque partie",
+    notifyHint: "Une notification Windows avec les coffres de la partie.",
+    settingsTitle: "Réglages",
+    overlay: "Overlay pendant Fortnite",
+    overlayHint: "Le total et la partie d'avant par-dessus le jeu, en plein écran fenêtré. Ctrl+Maj+O le cache, Ctrl+Maj+L le déplace.",
+    hotKeysTaken: "Un autre logiciel utilise déjà Ctrl+Maj+O ou Ctrl+Maj+L : l'overlay s'affiche, mais ces raccourcis ne marchent pas.",
+    obs: "Page pour OBS",
+    obsHint: "Ajoute une source Navigateur dans OBS avec cette adresse. Elle ne marche que sur ce PC.",
+    obsFailed: "La page n'a pas pu démarrer : un autre logiciel utilise les ports 28470 à 28479.",
+    copy: "Copier",
+    copied: "Copiée",
+    startWithFortnite: "S'ouvrir avec Fortnite",
+    startHint: "Démarre discrètement avec Windows, puis ouvre Chest Counter dans la zone de notification quand Fortnite se lance.",
     kinds: { normal: ["normal", "normaux"], rare: ["rare", "rares"], buried: ["enterré", "enterrés"], relic: ["relique", "reliques"], poster: ["avis de recherche", "avis de recherche"] },
     matchBroken: (n) => `environ ${n} ${frPlural(n, "cassé")} sans être ${frPlural(n, "ouvert")}`,
     notice: (before, after, moved) => `Comptage corrigé : les coffres revus étaient comptés deux fois. Lu dans les replays : ${after} au lieu de ${before}.${moved === "0" ? "" : moved === "1" ? " 1 partie sans replay est maintenant estimée." : ` ${moved} parties sans replay sont maintenant estimées.`}`,
@@ -90,6 +102,18 @@ const STRINGS = {
     back: "Back",
     matchesTitle: "Matches",
     notify: "Notify me when each match ends",
+    notifyHint: "A Windows notification with the match's chests.",
+    settingsTitle: "Settings",
+    overlay: "Overlay while Fortnite runs",
+    overlayHint: "The total and the last match over the game, in windowed fullscreen. Ctrl+Shift+O hides it, Ctrl+Shift+L moves it.",
+    hotKeysTaken: "Another app already uses Ctrl+Shift+O or Ctrl+Shift+L: the overlay shows, but these shortcuts do not work.",
+    obs: "Page for OBS",
+    obsHint: "Add a Browser source in OBS with this address. It only works on this PC.",
+    obsFailed: "The page could not start: another app uses ports 28470 to 28479.",
+    copy: "Copy",
+    copied: "Copied",
+    startWithFortnite: "Open with Fortnite",
+    startHint: "Starts quietly with Windows, then opens Chest Counter in the notification area when Fortnite starts.",
     kinds: { normal: ["normal", "normal"], rare: ["rare", "rare"], buried: ["buried", "buried"], relic: ["relic", "relics"], poster: ["wanted poster", "wanted posters"] },
     matchBroken: (n) => `about ${n} broken unopened`,
     notice: (before, after, moved) => `Count corrected: chests seen again were counted twice. Read from replays: ${after} instead of ${before}.${moved === "0" ? "" : moved === "1" ? " 1 match without a replay is now estimated." : ` ${moved} matches without a replay are now estimated.`}`,
@@ -222,6 +246,7 @@ function render(state) {
   paintStamp(state);
   paintStatus(state);
 
+  paintSettings(state.settings);
   element("notice").hidden = !state.notice;
   if (state.notice) {
     element("notice-text").textContent = t.notice(whole.format(state.notice.before), whole.format(state.notice.after), whole.format(state.notice.moved));
@@ -292,19 +317,41 @@ function renderMatches(data) {
     return item;
   }));
   element("matches-empty").hidden = data.matches.length > 0;
-  element("notify").checked = data.notify;
 }
 
-function showMatches(open) {
-  element("home").hidden = open;
-  element("matches").hidden = !open;
-  if (open) {
+function paintSettings(settings) {
+  if (!settings) {
+    return;
+  }
+
+  element("notify").checked = settings.notify;
+  element("overlay").checked = settings.overlay;
+  element("obs").checked = settings.obs;
+  element("start-with-fortnite").checked = settings.startWithFortnite;
+  const overlayHint = element("overlay-hint");
+  overlayHint.textContent = settings.overlay && settings.hotKeysTaken ? t.hotKeysTaken : t.overlayHint;
+  overlayHint.dataset.tone = settings.overlay && settings.hotKeysTaken ? "error" : "normal";
+  const obsHint = element("obs-hint");
+  obsHint.textContent = settings.obsFailed ? t.obsFailed : t.obsHint;
+  obsHint.dataset.tone = settings.obsFailed ? "error" : "normal";
+  element("obs-address").hidden = !settings.obsAddress;
+  element("obs-url").textContent = settings.obsAddress ?? "";
+}
+
+function showView(name, from) {
+  for (const view of ["home", "matches", "settings"]) {
+    element(view).hidden = view !== name;
+  }
+  if (name === "matches") {
     webview.postMessage({ type: "matches" });
     element("back").focus();
+  } else if (name === "settings") {
+    element("settings-back").focus();
   } else {
-    element("open-matches").focus();
+    element(from).focus();
   }
 }
+
 
 function isValid(value) {
   return Number.isInteger(value) && value >= 0 && value <= MAX_GAMES;
@@ -356,12 +403,27 @@ element("less").addEventListener("click", () => step(-1));
 element("more").addEventListener("click", () => step(1));
 element("apply-update").addEventListener("click", () => webview.postMessage({ type: "applyUpdate" }));
 element("dismiss-notice").addEventListener("click", () => webview.postMessage({ type: "dismissNotice" }));
-element("open-matches").addEventListener("click", () => showMatches(true));
-element("back").addEventListener("click", () => showMatches(false));
+element("open-matches").addEventListener("click", () => showView("matches"));
+element("back").addEventListener("click", () => showView("home", "open-matches"));
+element("open-settings").addEventListener("click", () => showView("settings"));
+element("settings-back").addEventListener("click", () => showView("home", "open-settings"));
 element("notify").addEventListener("change", (event) => webview.postMessage({ type: "setNotify", value: event.target.checked }));
+element("overlay").addEventListener("change", (event) => webview.postMessage({ type: "setOverlay", value: event.target.checked }));
+element("obs").addEventListener("change", (event) => webview.postMessage({ type: "setObs", value: event.target.checked }));
+element("start-with-fortnite").addEventListener("change", (event) => webview.postMessage({ type: "setStartWithFortnite", value: event.target.checked }));
+element("copy-obs").addEventListener("click", () => {
+  webview.postMessage({ type: "copyObs" });
+  element("copy-obs").textContent = t.copied;
+  setTimeout(() => { element("copy-obs").textContent = t.copy; }, 1500);
+});
 document.addEventListener("keydown", (event) => {
-  if (event.key === "Escape" && !element("matches").hidden) {
-    showMatches(false);
+  if (event.key !== "Escape") {
+    return;
+  }
+  if (!element("matches").hidden) {
+    showView("home", "open-matches");
+  } else if (!element("settings").hidden) {
+    showView("home", "open-settings");
   }
 });
 webview.addEventListener("message", (event) => (event.data.matches ? renderMatches(event.data) : render(event.data)));
