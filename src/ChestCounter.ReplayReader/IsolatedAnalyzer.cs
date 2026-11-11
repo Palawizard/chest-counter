@@ -13,6 +13,11 @@ public static class IsolatedAnalyzer
 
     public static ReplayOutcome Analyze(string executable, string path)
     {
+        if (ReplayAnalyzer.Peek(path) is { } quick)
+        {
+            return quick;
+        }
+
         var start = new ProcessStartInfo(executable) { ArgumentList = { Argument, path } };
         return Analyze(start, Timeout);
     }
