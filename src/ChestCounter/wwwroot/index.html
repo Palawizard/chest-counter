@@ -10,40 +10,63 @@
 <body>
   <header class="top"><img class="mark" src="icon.svg" alt="" width="26" height="26"><span class="name" data-t="appName"></span></header>
   <main class="page">
-    <section class="balance" aria-labelledby="total-label">
-      <img class="medal" src="medallion.svg" alt="">
-      <div class="balance-text">
-        <h1 id="total-label"><span data-t="total"></span> <span class="unit" data-t="inChests"></span></h1>
-        <p class="total" id="total">0</p>
-        <p class="stamp" id="stamp" hidden><span data-t="upToDate"></span><span id="stamp-time"></span></p>
-      </div>
-    </section>
-    <div class="entries">
-      <section class="entry entry-measured" aria-labelledby="measured-title">
-        <h2 id="measured-title" data-t="measured"></h2>
-        <p class="figure" id="measured"></p>
-        <p class="detail" id="measured-detail"></p>
+    <div class="view" id="home">
+      <section class="balance" aria-labelledby="total-label">
+        <img class="medal" src="medallion.svg" alt="">
+        <div class="balance-text">
+          <h1 id="total-label"><span data-t="total"></span> <span class="unit" data-t="inChests"></span></h1>
+          <p class="total" id="total">0</p>
+          <p class="stamp" id="stamp" hidden><span data-t="upToDate"></span><span id="stamp-time"></span></p>
+        </div>
       </section>
-      <section class="entry entry-estimated" aria-labelledby="estimated-title">
-        <h2 id="estimated-title" data-t="estimated"></h2>
-        <p class="figure" id="estimated"></p>
-        <p class="detail" id="estimated-detail"></p>
-      </section>
-    </div>
-    <div class="field">
-      <div class="field-text">
-        <label for="games" data-t="gamesLabel"></label>
-        <p class="hint" id="games-hint" data-t="gamesHint"></p>
+      <div class="entries">
+        <section class="entry entry-measured" aria-labelledby="measured-title">
+          <h2 id="measured-title" data-t="measured"></h2>
+          <p class="figure" id="measured"></p>
+          <p class="detail" id="measured-detail"></p>
+        </section>
+        <section class="entry entry-estimated" aria-labelledby="estimated-title">
+          <h2 id="estimated-title" data-t="estimated"></h2>
+          <p class="figure" id="estimated"></p>
+          <p class="detail" id="estimated-detail"></p>
+        </section>
+        <section class="entry entry-last" id="last" aria-labelledby="last-title" hidden>
+          <h2 id="last-title" data-t="lastMatch"></h2>
+          <p class="figure" id="last-chests"></p>
+          <p class="detail" id="last-detail"></p>
+          <p class="detail detail-more" id="last-day"></p>
+        </section>
       </div>
-      <div class="stepper">
-        <button type="button" id="less" data-t-label="less"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8h10"/></svg></button>
-        <input id="games" type="number" inputmode="numeric" min="0" max="100000" step="1" value="0" autocomplete="off" aria-describedby="games-hint">
-        <button type="button" id="more" data-t-label="more"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8h10M8 3v10"/></svg></button>
+      <button type="button" class="open-matches" id="open-matches" data-t="openMatches" hidden></button>
+      <div class="field">
+        <div class="field-text">
+          <label for="games" data-t="gamesLabel"></label>
+          <p class="hint" id="games-hint" data-t="gamesHint"></p>
+        </div>
+        <div class="stepper">
+          <button type="button" id="less" data-t-label="less"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8h10"/></svg></button>
+          <input id="games" type="number" inputmode="numeric" min="0" max="100000" step="1" value="0" autocomplete="off" aria-describedby="games-hint">
+          <button type="button" id="more" data-t-label="more"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8h10M8 3v10"/></svg></button>
+        </div>
       </div>
     </div>
 
+    <section class="view matches" id="matches" aria-labelledby="matches-title" hidden>
+      <div class="matches-head">
+        <button type="button" class="back" id="back"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3 5 8l5 5"/></svg><span data-t="back"></span></button>
+        <h1 id="matches-title" data-t="matchesTitle"></h1>
+      </div>
+      <ol class="match-list" id="match-list"></ol>
+      <p class="hint" id="matches-empty" data-t="noGames" hidden></p>
+      <label class="check"><input type="checkbox" id="notify"><span data-t="notify"></span></label>
+    </section>
+
     <footer class="foot">
       <p class="status" id="status" role="status"></p>
+      <div class="notice" id="notice" hidden>
+        <p id="notice-text"></p>
+        <button type="button" id="dismiss-notice" data-t="gotIt"></button>
+      </div>
       <div class="update" id="update" hidden>
         <p id="update-text"></p>
         <button type="button" id="apply-update" data-t="restart"></button>
