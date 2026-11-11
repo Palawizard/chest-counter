@@ -127,10 +127,6 @@ button:active { transform: scale(0.97); }
 .stepper input::-webkit-inner-spin-button { appearance: none; }
 .stepper input[aria-invalid="true"] { border-color: var(--alert); box-shadow: inset 0 0 0 1px var(--alert); }
 
-.quick { display: flex; gap: 8px; }
-.quick button { height: 28px; padding: 0 10px; font-size: 13px; }
-#quick-overlay[aria-pressed="true"] { border-color: transparent; background: var(--button); color: var(--button-ink); font-weight: 700; }
-
 .foot { display: grid; align-content: end; gap: 8px; }
 .status { min-height: 18px; color: var(--ink-soft); font-size: 13px; text-wrap: pretty; }
 .status[data-tone="error"] { color: var(--alert); font-weight: 600; }
@@ -142,8 +138,9 @@ button:active { transform: scale(0.97); }
 @media (hover: hover) and (pointer: fine) {
   .stepper button:hover { background: var(--press); }
   #apply-update:hover, #dismiss-notice:hover { background: var(--button-hover); }
-  .open-matches:hover, .back:hover, .open-settings:hover, #copy-obs:hover, #move-overlay:hover, .quick button:hover { background: var(--press); }
-  #quick-overlay[aria-pressed="true"]:hover { background: var(--button-hover); }
+  .open-matches:hover, .back:hover, #copy-obs:hover, #move-overlay:hover { background: var(--press); }
+  .top-button:hover { background: var(--press); }
+  #toggle-overlay[aria-pressed="true"]:hover { background: var(--button-hover); }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -152,9 +149,12 @@ button:active { transform: scale(0.97); }
 }
 
 .top { display: flex; align-items: center; gap: 10px; padding: 14px 22px 0; }
-.open-settings { display: grid; place-items: center; width: 26px; height: 26px; margin-left: auto; padding: 0; border-color: transparent; border-radius: 8px; }
-.open-settings svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; }
-.open-settings circle { fill: var(--ground); }
+.top-button { display: grid; place-items: center; width: 26px; height: 26px; padding: 0; border-color: transparent; border-radius: 8px; }
+.top-button svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; }
+#toggle-overlay { margin-left: auto; margin-right: -6px; }
+#toggle-overlay .solid { fill: currentColor; stroke: none; }
+#toggle-overlay[aria-pressed="true"] { background: var(--button); color: var(--button-ink); }
+#open-settings circle { fill: var(--ground); }
 .page { display: grid; grid-template-rows: auto 1fr; gap: 16px; padding: 10px 22px 16px; }
 .view { display: grid; align-content: start; gap: 16px; min-width: 0; }
 .balance { display: grid; grid-template-columns: 128px minmax(0, 1fr); align-items: center; gap: 16px; }

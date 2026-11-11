@@ -158,7 +158,10 @@ function applyStaticText() {
   document.documentElement.lang = lang;
   document.title = t.appName;
   document.querySelectorAll("[data-t]").forEach((node) => { node.textContent = t[node.dataset.t]; });
-  document.querySelectorAll("[data-t-label]").forEach((node) => node.setAttribute("aria-label", t[node.dataset.tLabel]));
+  document.querySelectorAll("[data-t-label]").forEach((node) => {
+    node.setAttribute("aria-label", t[node.dataset.tLabel]);
+    if (node.classList.contains("top-button")) node.title = t[node.dataset.tLabel];
+  });
   element("status").textContent = t.loading;
 }
 
@@ -343,12 +346,10 @@ function paintSettings(settings) {
   setText(obsHint, settings.obsFailed ? t.obsFailed : t.obsHint);
   obsHint.dataset.tone = settings.obsFailed ? "error" : "normal";
   element("overlay-move").hidden = !settings.overlay;
-  element("quick-overlay").setAttribute("aria-pressed", String(settings.overlay));
-  element("quick-move").hidden = !settings.overlay;
-  for (const move of [element("move-overlay"), element("quick-move")]) {
-    move.textContent = settings.overlayMoving ? t.lockHere : t.move;
-    move.setAttribute("aria-pressed", String(Boolean(settings.overlayMoving)));
-  }
+  element("toggle-overlay").setAttribute("aria-pressed", String(settings.overlay));
+  const move = element("move-overlay");
+  move.textContent = settings.overlayMoving ? t.lockHere : t.move;
+  move.setAttribute("aria-pressed", String(Boolean(settings.overlayMoving)));
   element("obs-address").hidden = !settings.obsAddress;
   element("obs-url").textContent = settings.obsAddress ?? "";
 }
@@ -427,8 +428,7 @@ element("overlay").addEventListener("change", (event) => webview.postMessage({ t
 element("obs").addEventListener("change", (event) => webview.postMessage({ type: "setObs", value: event.target.checked }));
 element("start-with-fortnite").addEventListener("change", (event) => webview.postMessage({ type: "setStartWithFortnite", value: event.target.checked }));
 element("move-overlay").addEventListener("click", () => webview.postMessage({ type: "moveOverlay" }));
-element("quick-move").addEventListener("click", () => webview.postMessage({ type: "moveOverlay" }));
-element("quick-overlay").addEventListener("click", () => webview.postMessage({ type: "setOverlay", value: !element("overlay").checked }));
+element("toggle-overlay").addEventListener("click", () => webview.postMessage({ type: "setOverlay", value: !element("overlay").checked }));
 element("copy-obs").addEventListener("click", () => {
   webview.postMessage({ type: "copyObs" });
   element("copy-obs").textContent = t.copied;
