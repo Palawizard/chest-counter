@@ -21,6 +21,8 @@ internal static class MatchHistory
 
     public static int On(IEnumerable<MatchRecord> matches, DateTime day) => matches.Where(m => m.PlayedAt.Date == day.Date).Sum(Total);
 
+    public static int GamesOn(IEnumerable<MatchRecord> matches, DateTime day) => matches.Count(m => m.PlayedAt.Date == day.Date);
+
     public static int Best(IEnumerable<MatchRecord> matches) => matches.Select(Total).DefaultIfEmpty(0).Max();
 
     private static int Total(MatchRecord match) => Total(match.Chests, match.BrokenNearby ?? 0);
