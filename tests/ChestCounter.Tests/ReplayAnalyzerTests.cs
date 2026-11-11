@@ -20,7 +20,9 @@ public sealed class ReplayAnalyzerTests : IDisposable
         Assert.StartsWith("++Fortnite+Release-43.", outcome.Match!.Branch);
         Assert.False(string.IsNullOrEmpty(outcome.Match.Id));
         Assert.Equal(new DateTime(2026, 11, 8), outcome.Match.PlayedAt.Date);
-        Assert.InRange(outcome.Match.Chests, 20, 40);
+        // The fixture's match: 11 chests opened, as LED-N's and thedackss's readers also find;
+        // 2.2.2 counted 20 because 9 chests came back into view.
+        Assert.Equal(11, outcome.Match.Chests);
         Assert.InRange(outcome.Match.BrokenNearby!.Value, 0, 60);
         Assert.Equal(MatchRecord.CurrentBrokenMethod, outcome.Match.BrokenMethod);
     }
