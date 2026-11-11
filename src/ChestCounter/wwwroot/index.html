@@ -50,6 +50,10 @@
           <button type="button" id="more" data-t-label="more"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8h10M8 3v10"/></svg></button>
         </div>
       </div>
+      <div class="quick">
+        <button type="button" id="quick-overlay" aria-pressed="false" data-t="overlayShort"></button>
+        <button type="button" id="quick-move" aria-pressed="false" hidden></button>
+      </div>
     </div>
 
     <section class="view matches" id="matches" aria-labelledby="matches-title" hidden>
@@ -73,11 +77,12 @@
       <div class="option">
         <label class="check"><input type="checkbox" id="overlay" aria-describedby="overlay-hint"><span data-t="overlay"></span></label>
         <p class="hint" id="overlay-hint" aria-live="polite"></p>
+        <div class="option-action" id="overlay-move" hidden><button type="button" id="move-overlay" aria-pressed="false"></button></div>
       </div>
       <div class="option">
         <label class="check"><input type="checkbox" id="obs" aria-describedby="obs-hint"><span data-t="obs"></span></label>
         <p class="hint" id="obs-hint" aria-live="polite"></p>
-        <div class="obs-address" id="obs-address" hidden><code id="obs-url"></code><button type="button" id="copy-obs" data-t="copy"></button></div>
+        <div class="option-action" id="obs-address" hidden><code id="obs-url"></code><button type="button" id="copy-obs" data-t="copy"></button></div>
       </div>
       <div class="option">
         <label class="check"><input type="checkbox" id="start-with-fortnite" aria-describedby="start-hint"><span data-t="startWithFortnite"></span></label>

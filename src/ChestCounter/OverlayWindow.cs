@@ -67,6 +67,14 @@ internal sealed class OverlayWindow : Form
         }
     }
 
+    public void KeepOnTop()
+    {
+        if (IsHandleCreated)
+        {
+            NativeMethods.KeepOnTop(Handle);
+        }
+    }
+
     public void Show(string total, string last)
     {
         if (total == _total && last == _last)

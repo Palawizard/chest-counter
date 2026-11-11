@@ -113,6 +113,7 @@ internal sealed class MainForm : Form
         if (m.Msg == NativeMethods.WmHotKey)
         {
             _inGame.OnHotKey(m.WParam.ToInt32());
+            PostState();
         }
 
         base.WndProc(ref m);
@@ -248,6 +249,9 @@ internal sealed class MainForm : Form
                 case "setStartWithFortnite":
                     StartWithFortnite.Set(message.RootElement.GetProperty("value").GetBoolean());
                     break;
+                case "moveOverlay":
+                    _inGame.ToggleMoving();
+                    break;
                 case "copyObs" when _inGame.ObsAddress is string address:
                     Clipboard.SetText(address);
                     break;
@@ -372,6 +376,7 @@ internal sealed class MainForm : Form
                 notify = _tracker.Notify,
                 overlay = settings.Overlay,
                 hotKeysTaken = _inGame.OverlayHotKeysTaken,
+                overlayMoving = _inGame.OverlayMoving,
                 obs = settings.Obs,
                 obsAddress = _inGame.ObsAddress,
                 obsFailed = settings.Obs && _inGame.ObsFailed,

@@ -13,6 +13,8 @@ internal sealed class InGame : IDisposable
     private readonly Func<(string Total, string Last)> _figures;
     private readonly Func<string> _obsState;
     private readonly System.Windows.Forms.Timer _poll = new() { Interval = 3000 };
+    private readonly NativeMethods.WinEventProc _onForeground;
+    private IntPtr _foregroundHook;
     private OverlayWindow? _overlay;
     private ObsServer? _obs;
     private bool _hotKeys;
@@ -21,6 +23,8 @@ internal sealed class InGame : IDisposable
 
     public bool OverlayVisible => _overlay?.Visible == true;
 
+    public bool OverlayMoving => _overlay?.Moving == true;
+
     public InGame(Form host, ChestTracker tracker, Func<(string Total, string Last)> figures, Func<string> obsState)
     {
         _host = host;
@@ -28,6 +32,7 @@ internal sealed class InGame : IDisposable
         _figures = figures;
         _obsState = obsState;
         _poll.Tick += (_, _) => Poll();
+        _onForeground = (_, _, _, _, _, _, _) => KeepOverlayOnTop();
     }
 
     public string? ObsAddress => _obs?.Address;
@@ -41,6 +46,7 @@ internal sealed class InGame : IDisposable
     {
         var settings = _tracker.Settings;
         SetHotKeys(settings.Overlay);
+        WatchForeground(settings.Overlay);
         var polling = _poll.Enabled;
         _poll.Enabled = settings.Overlay;
         if (settings.Overlay && !polling)
@@ -84,21 +90,31 @@ internal sealed class InGame : IDisposable
         {
             _hiddenByKey = !_hiddenByKey;
         }
-        else if (id == MoveHotKey && _overlay is not null)
-        {
-            _overlay.Moving = !_overlay.Moving;
-        }
         else if (id == MoveHotKey)
         {
-            Overlay().Moving = true;
+            ToggleMoving();
+            return;
         }
 
+        UpdateOverlay(_tracker.Settings);
+    }
+
+    public void ToggleMoving()
+    {
+        if (!_tracker.Settings.Overlay)
+        {
+            return;
+        }
+
+        var overlay = Overlay();
+        overlay.Moving = !overlay.Moving;
         UpdateOverlay(_tracker.Settings);
     }
 
     public void Dispose()
     {
         SetHotKeys(false);
+        WatchForeground(false);
         _poll.Dispose();
         _overlay?.Dispose();
         _obs?.Dispose();
@@ -129,6 +145,29 @@ internal sealed class InGame : IDisposable
             var saved = settings.OverlayX is int x && settings.OverlayY is int y ? new Point(x, y) : (Point?)null;
             overlay.Location = OverlayPlacement.Place(saved, overlay.Size, [.. Screen.AllScreens.Select(screen => screen.WorkingArea)], Screen.PrimaryScreen!.WorkingArea);
             overlay.Show();
+        }
+
+        overlay.KeepOnTop();
+    }
+
+    private void KeepOverlayOnTop()
+    {
+        if (_overlay?.Visible == true)
+        {
+            _overlay.KeepOnTop();
+        }
+    }
+
+    private void WatchForeground(bool on)
+    {
+        if (on && _foregroundHook == IntPtr.Zero)
+        {
+            _foregroundHook = NativeMethods.WatchForeground(_onForeground);
+        }
+        else if (!on && _foregroundHook != IntPtr.Zero)
+        {
+            NativeMethods.UnhookWinEvent(_foregroundHook);
+            _foregroundHook = IntPtr.Zero;
         }
     }
 

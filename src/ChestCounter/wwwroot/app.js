@@ -54,6 +54,9 @@ const STRINGS = {
     obs: "Page pour OBS",
     obsHint: "Donne une adresse à ajouter comme source Navigateur dans OBS, sur ce PC uniquement.",
     obsFailed: "La page n'a pas pu démarrer : un autre logiciel utilise les ports 28470 à 28479.",
+    overlayShort: "Overlay",
+    move: "Déplacer",
+    lockHere: "Fixer ici",
     copy: "Copier",
     copied: "Copiée",
     startWithFortnite: "S'ouvrir avec Fortnite",
@@ -110,6 +113,9 @@ const STRINGS = {
     obs: "Page for OBS",
     obsHint: "Gives an address to add as a Browser source in OBS, on this PC only.",
     obsFailed: "The page could not start: another app uses ports 28470 to 28479.",
+    overlayShort: "Overlay",
+    move: "Move",
+    lockHere: "Lock here",
     copy: "Copy",
     copied: "Copied",
     startWithFortnite: "Open with Fortnite",
@@ -336,6 +342,13 @@ function paintSettings(settings) {
   const obsHint = element("obs-hint");
   setText(obsHint, settings.obsFailed ? t.obsFailed : t.obsHint);
   obsHint.dataset.tone = settings.obsFailed ? "error" : "normal";
+  element("overlay-move").hidden = !settings.overlay;
+  element("quick-overlay").setAttribute("aria-pressed", String(settings.overlay));
+  element("quick-move").hidden = !settings.overlay;
+  for (const move of [element("move-overlay"), element("quick-move")]) {
+    move.textContent = settings.overlayMoving ? t.lockHere : t.move;
+    move.setAttribute("aria-pressed", String(Boolean(settings.overlayMoving)));
+  }
   element("obs-address").hidden = !settings.obsAddress;
   element("obs-url").textContent = settings.obsAddress ?? "";
 }
@@ -413,6 +426,9 @@ element("notify").addEventListener("change", (event) => webview.postMessage({ ty
 element("overlay").addEventListener("change", (event) => webview.postMessage({ type: "setOverlay", value: event.target.checked }));
 element("obs").addEventListener("change", (event) => webview.postMessage({ type: "setObs", value: event.target.checked }));
 element("start-with-fortnite").addEventListener("change", (event) => webview.postMessage({ type: "setStartWithFortnite", value: event.target.checked }));
+element("move-overlay").addEventListener("click", () => webview.postMessage({ type: "moveOverlay" }));
+element("quick-move").addEventListener("click", () => webview.postMessage({ type: "moveOverlay" }));
+element("quick-overlay").addEventListener("click", () => webview.postMessage({ type: "setOverlay", value: !element("overlay").checked }));
 element("copy-obs").addEventListener("click", () => {
   webview.postMessage({ type: "copyObs" });
   element("copy-obs").textContent = t.copied;
