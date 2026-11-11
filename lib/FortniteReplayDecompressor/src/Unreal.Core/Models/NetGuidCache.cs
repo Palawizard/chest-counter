@@ -1,4 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
+using System.Text.RegularExpressions;
 using Unreal.Core.Contracts;
 using Unreal.Core.Extensions;
 
@@ -85,6 +86,12 @@ public class NetGuidCache
         if (group.EndsWith("ClassNetCache"))
         {
             exportGroup.PathName = exportGroup.PathName.RemoveAllPathPrefixes();
+        }
+
+        // An actor can arrive before its class is exported: forget the failures so it is tried again.
+        if (!NetFieldExportGroupMap.ContainsKey(group))
+        {
+            _failedPaths.Clear();
         }
 
         NetFieldExportGroupMap[group] = exportGroup;
@@ -200,6 +207,19 @@ public class NetGuidCache
                 }
             }
 
+            if (InstanceClassName(path) is string className)
+            {
+                foreach (var groupPathKvp in NetFieldExportGroupMap)
+                {
+                    if (groupPathKvp.Key.RemoveAllPathPrefixes() == className)
+                    {
+                        NetFieldExportGroupMapPathFixed[netguid.Value] = groupPathKvp.Value;
+                        _archTypeToExportGroup[netguid.Value] = groupPathKvp.Value;
+                        return groupPathKvp.Value;
+                    }
+                }
+            }
+
             _failedPaths.Add(path);
             return null;
         }
@@ -236,6 +256,25 @@ public class NetGuidCache
     /// <param name="pathName"></param>
     /// <returns>true if netguid was resolved, false otherwise</returns>
     public bool TryGetPathName(uint netguid, [NotNullWhen(returnValue: true)] out string pathName) => NetGuidToPathName.TryGetValue(netguid, out pathName);
+
+    private static readonly Regex InstanceName = new(@"^(?<class>.+?)\d*(?:_UAID_\w+|_[0-9a-f]{16}_\d+)$", RegexOptions.Compiled);
+
+    /// <summary>
+    /// Class of a level instance named after it with a number and an instance suffix, such as
+    /// "Tiered_Chest_Athena5_6e02a0a859c897db_11" or "Tiered_Chest_Athena47_UAID_387C764928FB_1632776713"
+    /// for "Tiered_Chest_Athena_C". Only that exact class is matched, so no other layout is used.
+    /// </summary>
+    public static string? InstanceClassName(string path)
+    {
+        var match = InstanceName.Match(path.RemoveAllPathPrefixes());
+        if (!match.Success)
+        {
+            return null;
+        }
+
+        var name = match.Groups["class"].Value;
+        return name.EndsWith("_C", StringComparison.Ordinal) ? name : name + "_C";
+    }
 
     /// <summary>
     /// Tries to resolve the tagIndex using the <see cref="NetworkGameplayTagNodeIndex"/>
