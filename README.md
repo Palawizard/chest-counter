@@ -72,10 +72,10 @@ If you played matches before installing Chest Counter, or Fortnite already delet
 
 The button at the top right opens the settings:
 
-- **Notify me when each match ends**: a Windows notification with the match's chests.
-- **Overlay while Fortnite runs**: the total and your last match over the game. It only shows while Fortnite runs, in fullscreen or windowed mode. **Ctrl+Shift+O** hides or shows it, **Ctrl+Shift+L** lets you drag it somewhere else, then locks it again. The **Overlay** and **Move** buttons at the top right of the window do the same. Clicks go through it to the game.
-- **Page for OBS**: shows an address such as `http://127.0.0.1:28470/`. Add a Browser source in OBS with it. The page is transparent and updates every few seconds.
-- **Open with Fortnite**: a small process starts with Windows, waits quietly and opens Chest Counter in the notification area when Fortnite starts.
+- Notify me when each match ends: a Windows notification with the match's chests.
+- Overlay while Fortnite runs: the total and your last match over the game. It only shows while Fortnite runs, in fullscreen or windowed mode. **Ctrl+Shift+O** hides or shows it, **Ctrl+Shift+L** lets you drag it somewhere else, then locks it again. The **Overlay** and **Move** buttons at the top right of the window do the same. Clicks go through it to the game.
+- Page for OBS: shows an address such as `http://127.0.0.1:28470/`. Add a Browser source in OBS with it. The page is transparent and updates every few seconds.
+- Open with Fortnite: a small process starts with Windows, waits quietly and opens Chest Counter in the notification area when Fortnite starts.
 
 Closing the window keeps Chest Counter running by the clock, so the overlay, the OBS page and the notifications keep working. To quit, right-click the icon by the clock and choose **Quit**.
 
